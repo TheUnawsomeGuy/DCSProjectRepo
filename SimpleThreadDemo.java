@@ -1,11 +1,12 @@
+import java.util.concurrent.*;
 
 public class SimpleThreadDemo {
-    private static int Resource = 0; //initial value of the resource
+    private static int Resource = 100; //initial value of the resource
     private Object lock = new Object(); //lock the object (add better explanation)
     public static void main(String[] args) {
         System.out.println("Communication between threads");
 
-        Thread depositService1 = new Thread(new SimpleThreadDemo().new DepositService(), "DepositService1"); //create a new thread for the deposit service
+        /*Thread depositService1 = new Thread(new SimpleThreadDemo().new DepositService(), "DepositService1"); //create a new thread for the deposit service
         Thread withdrawService1 = new Thread(new SimpleThreadDemo().new WithdrawService(), "WithdrawService1"); //create a new thread for the withdraw service
         Thread auditService1 = new Thread(new SimpleThreadDemo().new AuditService(), "AuditService1"); //create a new thread for the audit service
 
@@ -17,6 +18,19 @@ public class SimpleThreadDemo {
             depositService1.join();
             withdrawService1.join();
             auditService1.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } */
+
+        ExecutorService executorService = Executors.newFixedThreadPool(3); //actually read the case study like a boss
+        executorService.execute(new SimpleThreadDemo().new DepositService()); //execute the deposit service
+        executorService.execute(new SimpleThreadDemo().new WithdrawService()); //execute the withdraw service
+        executorService.execute(new SimpleThreadDemo().new AuditService()); //execute the audit service
+
+        executorService.shutdown();
+
+        try {
+            executorService.awaitTermination(1, TimeUnit.MINUTES); //wait for the executor service to terminate
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -58,7 +72,7 @@ public class SimpleThreadDemo {
     class WithdrawService implements Runnable {
         public void run() {
             for (int i = 0; i < 10; i++) {
-                synchronized (lock) {
+                synchronized (lock) { 
                     int oldValue = Resource;
 
                     if (Resource >= 6) { //check if the resource is greater than 6 to avoid negative values
