@@ -1,6 +1,12 @@
-// File: Node.java
 package DNSSim;
 import java.util.Optional;
+
+/*
+ * This class represents a node in the network.
+ * It can use a central DNS or its own local flat name service.
+ * It can also find a resource by resolving its name via DNS or performing a local lookup.
+ * It can also register a resource locally.
+ */
 
 public class Node {
     private String nodeId;
