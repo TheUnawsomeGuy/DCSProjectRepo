@@ -8,28 +8,61 @@ The Distributed System Simulator is a comprehensive platform that demonstrates d
 ```mermaid
 graph TB
     subgraph "Distributed System Simulator"
-        GUI[SimulatorGUI<br/>- User Interface<br/>- Control Panel<br/>- Performance Monitoring]
+        GUI["SimulatorGUI
+        User Interface
+        Control Panel
+        Performance Monitoring"]
         
         subgraph "Core Components"
-            DSS[DistributedSystemSimulator<br/>- Main Controller<br/>- Simulation Management<br/>- Metrics Collection]
-            CC[CentralCoordinator<br/>- Sequential Consistency<br/>- Operation Ordering<br/>- Global State Management]
+            DSS["DistributedSystemSimulator
+            Main Controller
+            Simulation Management
+            Metrics Collection"]
+            CC["CentralCoordinator
+            Sequential Consistency
+            Operation Ordering
+            Global State Management"]
         end
         
         subgraph "Service Nodes"
-            NA[NodeA<br/>- Local Data Store<br/>- Client Operations<br/>- Resource Management]
-            NB[NodeB<br/>- Local Data Store<br/>- Client Operations<br/>- Resource Management]
-            NC[NodeC<br/>- Local Data Store<br/>- Client Operations<br/>- Resource Management]
+            NA["NodeA
+            Local Data Store
+            Client Operations
+            Resource Management"]
+            NB["NodeB
+            Local Data Store
+            Client Operations
+            Resource Management"]
+            NC["NodeC
+            Local Data Store
+            Client Operations
+            Resource Management"]
         end
         
         subgraph "Naming Services"
-            FNS[FlatNamingService<br/>- Simple Key-Value<br/>- O(1) Lookup<br/>- Hash Table Based]
-            SNS[StructuredNamingService<br/>- Hierarchical Paths<br/>- Tree Structure<br/>- Path-based Resolution]
-            DNS[DNSSimulator<br/>- Domain Name Resolution<br/>- IP Address Mapping<br/>- Network Simulation]
+            FNS["FlatNamingService
+            Simple Key-Value
+            O(1) Lookup
+            Hash Table Based"]
+            SNS["StructuredNamingService
+            Hierarchical Paths
+            Tree Structure
+            Path-based Resolution"]
+            DNS["DNSSimulator
+            Domain Name Resolution
+            IP Address Mapping
+            Network Simulation"]
         end
         
         subgraph "Threading & Execution"
-            TP[ThreadPool<br/>- Concurrent Execution<br/>- Task Management<br/>- Resource Sharing]
-            ES[ExecutorService<br/>- Scheduled Tasks<br/>- Background Processing<br/>- Lifecycle Management]
+            TP["ThreadPool
+            Concurrent Execution
+            Task Management
+            Resource Sharing"]
+            ES["ExecutorService
+            Scheduled Tasks
+            Background Processing
+            Lifecycle Management"]
         end
     end
     
@@ -65,31 +98,70 @@ graph TB
 graph LR
     subgraph "Process Roles"
         subgraph "Client Processes"
-            C1[Client-NodeA<br/>Issues Operations<br/>Read/Write Requests<br/>Consistency Requirements]
-            C2[Client-NodeB<br/>Issues Operations<br/>Read/Write Requests<br/>Consistency Requirements]
-            C3[Client-NodeC<br/>Issues Operations<br/>Read/Write Requests<br/>Consistency Requirements]
+            C1["Client-NodeA
+            Issues Operations
+            Read/Write Requests
+            Consistency Requirements"]
+            C2["Client-NodeB
+            Issues Operations
+            Read/Write Requests
+            Consistency Requirements"]
+            C3["Client-NodeC
+            Issues Operations
+            Read/Write Requests
+            Consistency Requirements"]
         end
         
         subgraph "Server Processes"
-            S1[ServiceNode-A<br/>Data Storage<br/>Operation Processing<br/>State Replication]
-            S2[ServiceNode-B<br/>Data Storage<br/>Operation Processing<br/>State Replication]
-            S3[ServiceNode-C<br/>Data Storage<br/>Operation Processing<br/>State Replication]
+            S1["ServiceNode-A
+            Data Storage
+            Operation Processing
+            State Replication"]
+            S2["ServiceNode-B
+            Data Storage
+            Operation Processing
+            State Replication"]
+            S3["ServiceNode-C
+            Data Storage
+            Operation Processing
+            State Replication"]
         end
         
         subgraph "Coordination Services"
-            COORD[CentralCoordinator<br/>Sequence Assignment<br/>Ordering Guarantees<br/>Consensus Management]
-            SYNC[Synchronization Service<br/>Eventual Consistency<br/>State Convergence<br/>Conflict Resolution]
+            COORD["CentralCoordinator
+            Sequence Assignment
+            Ordering Guarantees
+            Consensus Management"]
+            SYNC["Synchronization Service
+            Eventual Consistency
+            State Convergence
+            Conflict Resolution"]
         end
         
         subgraph "Naming Services"
-            NS1[Flat Naming<br/>Simple Resolution<br/>Hash-based Lookup<br/>Fast Access]
-            NS2[Structured Naming<br/>Hierarchical Resolution<br/>Path Navigation<br/>Organized Access]
-            NS3[DNS Service<br/>Domain Resolution<br/>Network Mapping<br/>Distributed Lookup]
+            NS1["Flat Naming
+            Simple Resolution
+            Hash-based Lookup
+            Fast Access"]
+            NS2["Structured Naming
+            Hierarchical Resolution
+            Path Navigation
+            Organized Access"]
+            NS3["DNS Service
+            Domain Resolution
+            Network Mapping
+            Distributed Lookup"]
         end
         
         subgraph "Management Processes"
-            PM[Performance Monitor<br/>Metrics Collection<br/>Violation Detection<br/>System Health]
-            GUI_PROC[GUI Process<br/>User Interface<br/>Control Operations<br/>Status Display]
+            PM["Performance Monitor
+            Metrics Collection
+            Violation Detection
+            System Health"]
+            GUI_PROC["GUI Process
+            User Interface
+            Control Operations
+            Status Display"]
         end
     end
     
@@ -191,30 +263,65 @@ sequenceDiagram
 graph TB
     subgraph "Naming Service Layer"
         subgraph "Flat Naming Service"
-            FNS_HASH[Hash Table<br/>name → resource]
-            FNS_OPS[Operations:<br/>• register(name, resource)<br/>• lookup(name)<br/>• remove(name)]
-            FNS_CHAR[Characteristics:<br/>• O(1) lookup time<br/>• Simple structure<br/>• No organization<br/>• Name collision risk]
+            FNS_HASH["Hash Table
+            name to resource"]
+            FNS_OPS["Operations:
+            register(name, resource)
+            lookup(name)
+            remove(name)"]
+            FNS_CHAR["Characteristics:
+            O(1) lookup time
+            Simple structure
+            No organization
+            Name collision risk"]
         end
         
         subgraph "Structured Naming Service"
-            SNS_TREE[Hierarchical Tree<br/>path → resource]
-            SNS_OPS[Operations:<br/>• register(path, resource)<br/>• lookup(path)<br/>• listChildren(path)<br/>• validatePath(path)]
-            SNS_CHAR[Characteristics:<br/>• Path-based organization<br/>• Tree structure<br/>• Namespace hierarchy<br/>• Better management]
+            SNS_TREE["Hierarchical Tree
+            path to resource"]
+            SNS_OPS["Operations:
+            register(path, resource)
+            lookup(path)
+            listChildren(path)
+            validatePath(path)"]
+            SNS_CHAR["Characteristics:
+            Path-based organization
+            Tree structure
+            Namespace hierarchy
+            Better management"]
         end
         
         subgraph "DNS Simulator"
-            DNS_MAP[Domain Mapping<br/>domain → IP address]
-            DNS_OPS[Operations:<br/>• register(domain, ip)<br/>• lookup(domain)<br/>• reverseLookup(ip)<br/>• expireCache()]
-            DNS_CHAR[Characteristics:<br/>• Industry standard<br/>• Network-oriented<br/>• Distributed design<br/>• Cache support]
+            DNS_MAP["Domain Mapping
+            domain to IP address"]
+            DNS_OPS["Operations:
+            register(domain, ip)
+            lookup(domain)
+            reverseLookup(ip)
+            expireCache()"]
+            DNS_CHAR["Characteristics:
+            Industry standard
+            Network-oriented
+            Distributed design
+            Cache support"]
         end
     end
     
     subgraph "Resource Registration Examples"
-        FLAT_EX["Flat Examples:<br/>• 'nodea-service' → NodeA<br/>• 'database' → DB Server<br/>• 'cache' → Cache Server"]
+        FLAT_EX["Flat Examples:
+        'nodea-service' maps to NodeA
+        'database' maps to DB Server
+        'cache' maps to Cache Server"]
         
-        STRUCT_EX["Structured Examples:<br/>• '/services/nodea-service' → NodeA<br/>• '/databases/primary' → Primary DB<br/>• '/cache/redis' → Redis Cache"]
+        STRUCT_EX["Structured Examples:
+        '/services/nodea-service' maps to NodeA
+        '/databases/primary' maps to Primary DB
+        '/cache/redis' maps to Redis Cache"]
         
-        DNS_EX["DNS Examples:<br/>• 'service1.example.com' → 192.168.1.10<br/>• 'db.example.com' → 192.168.1.20<br/>• 'api.example.com' → 192.168.1.30"]
+        DNS_EX["DNS Examples:
+        'service1.example.com' maps to 192.168.1.10
+        'db.example.com' maps to 192.168.1.20
+        'api.example.com' maps to 192.168.1.30"]
     end
     
     FNS_HASH --> FLAT_EX
@@ -222,7 +329,7 @@ graph TB
     DNS_MAP --> DNS_EX
     
     subgraph "Client Access Patterns"
-        CLIENT[Client Application]
+        CLIENT["Client Application"]
         CLIENT --> FNS_HASH
         CLIENT --> SNS_TREE
         CLIENT --> DNS_MAP
@@ -235,27 +342,36 @@ graph TB
 graph TB
     subgraph "Consistency Models Implementation"
         subgraph "Sequential Consistency"
-            SC_COORD[Central Coordinator<br/>Global Operation Ordering]
-            SC_SEQ[Sequence Numbers<br/>Total Order Guarantee]
-            SC_APPLY[Ordered Application<br/>All Nodes Same Order]
+            SC_COORD["Central Coordinator
+            Global Operation Ordering"]
+            SC_SEQ["Sequence Numbers
+            Total Order Guarantee"]
+            SC_APPLY["Ordered Application
+            All Nodes Same Order"]
             
             SC_COORD --> SC_SEQ
             SC_SEQ --> SC_APPLY
         end
         
         subgraph "Eventual Consistency"
-            EC_ASYNC[Asynchronous Propagation<br/>Background Sync Process]
-            EC_CONV[State Convergence<br/>All Nodes Eventually Consistent]
-            EC_PART[Partition Tolerance<br/>Temporary Divergence Allowed]
+            EC_ASYNC["Asynchronous Propagation
+            Background Sync Process"]
+            EC_CONV["State Convergence
+            All Nodes Eventually Consistent"]
+            EC_PART["Partition Tolerance
+            Temporary Divergence Allowed"]
             
             EC_ASYNC --> EC_CONV
             EC_CONV --> EC_PART
         end
         
         subgraph "Client-Centric Consistency"
-            CC_CLIENT[Client Version Tracking<br/>Per-Client Consistency View]
-            CC_READ[Read-Your-Writes<br/>Monotonic Read Consistency]
-            CC_WRITE[Write-Follows-Reads<br/>Monotonic Write Consistency]
+            CC_CLIENT["Client Version Tracking
+            Per-Client Consistency View"]
+            CC_READ["Read-Your-Writes
+            Monotonic Read Consistency"]
+            CC_WRITE["Write-Follows-Reads
+            Monotonic Write Consistency"]
             
             CC_CLIENT --> CC_READ
             CC_READ --> CC_WRITE
@@ -263,12 +379,18 @@ graph TB
     end
     
     subgraph "Data Replication Flow"
-        OP_SUB[Operation Submission<br/>Client → Node]
-        OP_COORD[Coordination<br/>Node → Central Coordinator]
-        OP_SEQ[Sequence Assignment<br/>Global Ordering]
-        OP_DIST[Distribution<br/>Coordinator → All Nodes]
-        OP_APPLY[Application<br/>Nodes Apply Operation]
-        OP_ACK[Acknowledgment<br/>Completion Notification]
+        OP_SUB["Operation Submission
+        Client to Node"]
+        OP_COORD["Coordination
+        Node to Central Coordinator"]
+        OP_SEQ["Sequence Assignment
+        Global Ordering"]
+        OP_DIST["Distribution
+        Coordinator to All Nodes"]
+        OP_APPLY["Application
+        Nodes Apply Operation"]
+        OP_ACK["Acknowledgment
+        Completion Notification"]
         
         OP_SUB --> OP_COORD
         OP_COORD --> OP_SEQ
@@ -278,9 +400,12 @@ graph TB
     end
     
     subgraph "Conflict Resolution"
-        DETECT[Conflict Detection<br/>Version Vector Comparison]
-        RESOLVE[Resolution Strategy<br/>Last-Writer-Wins / Merge]
-        SYNC[Synchronization<br/>State Reconciliation]
+        DETECT["Conflict Detection
+        Version Vector Comparison"]
+        RESOLVE["Resolution Strategy
+        Last-Writer-Wins / Merge"]
+        SYNC["Synchronization
+        State Reconciliation"]
         
         DETECT --> RESOLVE
         RESOLVE --> SYNC
