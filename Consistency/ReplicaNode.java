@@ -61,5 +61,24 @@ public class ReplicaNode {
         return value;
     }
 
-  
+    /**
+     * Sync with coordinator for eventual consistency
+     */
+    public void syncWithCoordinator(CentralCoordinator coordinator) {
+        List<Operation> missedOperations = coordinator.getOperationsSince(lastAppliedSequence);
+        
+        if (!missedOperations.isEmpty()) {
+            System.out.println(nodeId + ": Syncing " + missedOperations.size() + " missed operations");
+            for (Operation op : missedOperations) {
+                applyOperation(op);
+            }
+        }
+    }
+
+    public String getNodeId() { return nodeId; }
+    public int getLastAppliedSequence() { return lastAppliedSequence; }
+    
+    public void printDataStore() {
+        System.out.println(nodeId + " Data: " + dataStore + " (seq: " + lastAppliedSequence + ")");
+    }
 } 
