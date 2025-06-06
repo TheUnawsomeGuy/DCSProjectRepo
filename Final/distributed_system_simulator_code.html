@@ -1,0 +1,3260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Distributed System Simulator - Complete Source Code</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 20px;
+            line-height: 1.4;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        .file-header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0 10px 0;
+        }
+        .file-path {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .line-numbers {
+            color: #95a5a6;
+            font-size: 0.8em;
+            user-select: none;
+        }
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .java-code {
+            background-color: #fff5f5;
+        }
+        .markdown-code {
+            background-color: #f0f8ff;
+        }
+        .properties-code {
+            background-color: #f5f5f0;
+        }
+        .toc {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        .toc a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        @media print {
+            body { font-size: 10pt; }
+            h1 { page-break-before: always; }
+            h2 { page-break-before: always; }
+            pre { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Distributed System Simulator - Complete Source Code</h1>
+    <p><strong>Generated on:</strong> /home/squid/devops/unisza/dcs 2/Final</p>
+    
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#CentralCoordinator_java">CentralCoordinator.java</a></li>
+            <li><a href="#ConsoleDemo_java">ConsoleDemo.java</a></li>
+            <li><a href="#DNSSimulator_java">DNSSimulator.java</a></li>
+            <li><a href="#DistributedSystemSimulator_java">DistributedSystemSimulator.java</a></li>
+            <li><a href="#FlatNamingService_java">FlatNamingService.java</a></li>
+            <li><a href="#Operation_java">Operation.java</a></li>
+            <li><a href="#PerformanceMetric_java">PerformanceMetric.java</a></li>
+            <li><a href="#Resource_java">Resource.java</a></li>
+            <li><a href="#ServiceNode_java">ServiceNode.java</a></li>
+            <li><a href="#SimulatorGUI_java">SimulatorGUI.java</a></li>
+            <li><a href="#StructuredNamingService_java">StructuredNamingService.java</a></li>
+            <li><a href="#ENHANCED_FEATURES_SUMMARY_md">ENHANCED_FEATURES_SUMMARY.md</a></li>
+            <li><a href="#GUI_README_md">GUI_README.md</a></li>
+            <li><a href="#README_md">README.md</a></li>
+            <li><a href="#configs_high-performance_properties">configs/high-performance.properties</a></li>
+            <li><a href="#configs_sample_properties">configs/sample.properties</a></li>
+        </ul>
+    </div>
+
+    <div class="file-header" id="CentralCoordinator_java">
+        <h2>CentralCoordinator.java</h2>
+        <div class="file-path">File: CentralCoordinator.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 114</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | import java.util.*;
+   4 | import java.util.concurrent.ConcurrentLinkedQueue;
+   5 | import java.util.concurrent.atomic.AtomicInteger;
+   6 | 
+   7 | /**
+   8 |  * Central coordinator for managing sequential consistency
+   9 |  * Maintains a global log of operations and assigns sequence numbers
+  10 |  */
+  11 | public class CentralCoordinator {
+  12 |     private final List&lt;Operation&gt; operationLog;
+  13 |     private final AtomicInteger sequenceCounter;
+  14 |     private final Queue&lt;Operation&gt; pendingOperations;
+  15 | 
+  16 |     public CentralCoordinator() {
+  17 |         this.operationLog = Collections.synchronizedList(new ArrayList&lt;&gt;());
+  18 |         this.sequenceCounter = new AtomicInteger(0);
+  19 |         this.pendingOperations = new ConcurrentLinkedQueue&lt;&gt;();
+  20 |     }
+  21 | 
+  22 |     /**
+  23 |      * Submit an operation to the coordinator
+  24 |      * Returns the operation with assigned sequence number
+  25 |      */
+  26 |     public Operation submitOperation(String type, String key, String value, String clientId) {
+  27 |         int sequenceNumber = sequenceCounter.incrementAndGet();
+  28 |         Operation operation = new Operation(sequenceNumber, type, key, value, clientId);
+  29 |         
+  30 |         synchronized (operationLog) {
+  31 |             operationLog.add(operation);
+  32 |             pendingOperations.offer(operation);
+  33 |         }
+  34 |         
+  35 |         System.out.println(&quot;Coordinator: Received &quot; + operation);
+  36 |         return operation;
+  37 |     }
+  38 | 
+  39 |     /**
+  40 |      * Get operations that happened after a specific sequence number
+  41 |      * Used for eventual consistency synchronization
+  42 |      */
+  43 |     public List&lt;Operation&gt; getOperationsSince(int lastSequence) {
+  44 |         List&lt;Operation&gt; result = new ArrayList&lt;&gt;();
+  45 |         
+  46 |         synchronized (operationLog) {
+  47 |             for (Operation op : operationLog) {
+  48 |                 if (op.getSequenceNumber() &gt; lastSequence) {
+  49 |                     result.add(op);
+  50 |                 }
+  51 |             }
+  52 |         }
+  53 |         
+  54 |         return result;
+  55 |     }
+  56 | 
+  57 |     /**
+  58 |      * Get pending operations for sequential consistency
+  59 |      */
+  60 |     public List&lt;Operation&gt; getPendingOperations() {
+  61 |         List&lt;Operation&gt; result = new ArrayList&lt;&gt;();
+  62 |         Operation op;
+  63 |         while ((op = pendingOperations.poll()) != null) {
+  64 |             result.add(op);
+  65 |         }
+  66 |         return result;
+  67 |     }
+  68 | 
+  69 |     /**
+  70 |      * Get all operations in the log
+  71 |      */
+  72 |     public List&lt;Operation&gt; getAllOperations() {
+  73 |         synchronized (operationLog) {
+  74 |             return new ArrayList&lt;&gt;(operationLog);
+  75 |         }
+  76 |     }
+  77 | 
+  78 |     /**
+  79 |      * Get the total number of operations
+  80 |      */
+  81 |     public int getTotalOperations() {
+  82 |         return operationLog.size();
+  83 |     }
+  84 | 
+  85 |     /**
+  86 |      * Get the current sequence number
+  87 |      */
+  88 |     public int getCurrentSequence() {
+  89 |         return sequenceCounter.get();
+  90 |     }
+  91 | 
+  92 |     /**
+  93 |      * Print the operation log
+  94 |      */
+  95 |     public void printLog() {
+  96 |         System.out.println(&quot;Central Coordinator Log (&quot; + operationLog.size() + &quot; operations):&quot;);
+  97 |         synchronized (operationLog) {
+  98 |             for (Operation op : operationLog) {
+  99 |                 System.out.println(&quot;  &quot; + op);
+ 100 |             }
+ 101 |         }
+ 102 |     }
+ 103 | 
+ 104 |     /**
+ 105 |      * Clear the operation log (for testing purposes)
+ 106 |      */
+ 107 |     public void clearLog() {
+ 108 |         synchronized (operationLog) {
+ 109 |             operationLog.clear();
+ 110 |             pendingOperations.clear();
+ 111 |         }
+ 112 |         sequenceCounter.set(0);
+ 113 |     }
+ 114 | } 
+</pre>
+
+    <div class="file-header" id="ConsoleDemo_java">
+        <h2>ConsoleDemo.java</h2>
+        <div class="file-path">File: ConsoleDemo.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 139</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | /**
+   4 |  * Console demonstration of the integrated distributed system
+   5 |  * Tests all major functionality without GUI
+   6 |  */
+   7 | public class ConsoleDemo {
+   8 |     
+   9 |     public static void main(String[] args) {
+  10 |         System.out.println(&quot;🚀 Distributed System Console Demo&quot;);
+  11 |         System.out.println(&quot;===================================\n&quot;);
+  12 |         
+  13 |         // Create simulator
+  14 |         DistributedSystemSimulator simulator = new DistributedSystemSimulator();
+  15 |         
+  16 |         try {
+  17 |             // Test naming services
+  18 |             System.out.println(&quot;🔍 Testing Naming Services:&quot;);
+  19 |             testNamingServices(simulator);
+  20 |             
+  21 |             // Start simulation
+  22 |             System.out.println(&quot;\n🎯 Starting Simulation...&quot;);
+  23 |             simulator.startSimulation();
+  24 |             
+  25 |             // Let it run for a bit
+  26 |             Thread.sleep(3000);
+  27 |             
+  28 |             // Test operations
+  29 |             System.out.println(&quot;\n💻 Testing Operations:&quot;);
+  30 |             testOperations(simulator);
+  31 |             
+  32 |             // Test failure scenarios
+  33 |             System.out.println(&quot;\n💥 Testing Failure Scenarios:&quot;);
+  34 |             testFailureScenarios(simulator);
+  35 |             
+  36 |             // Show status
+  37 |             System.out.println(&quot;\n📊 System Status:&quot;);
+  38 |             simulator.printSystemStatus();
+  39 |             
+  40 |             // Let it run more
+  41 |             Thread.sleep(2000);
+  42 |             
+  43 |             // Show metrics
+  44 |             System.out.println(&quot;\n📈 Performance Metrics:&quot;);
+  45 |             showMetrics(simulator);
+  46 |             
+  47 |         } catch (InterruptedException e) {
+  48 |             Thread.currentThread().interrupt();
+  49 |         } finally {
+  50 |             // Stop simulation
+  51 |             System.out.println(&quot;\n🛑 Stopping Simulation...&quot;);
+  52 |             simulator.stopSimulation();
+  53 |         }
+  54 |         
+  55 |         System.out.println(&quot;\n✅ Demo completed successfully!&quot;);
+  56 |     }
+  57 |     
+  58 |     private static void testNamingServices(DistributedSystemSimulator simulator) {
+  59 |         // Test flat naming
+  60 |         String result = simulator.lookupResource(&quot;nodea-service&quot;, &quot;flat&quot;);
+  61 |         System.out.println(&quot;Flat lookup result: &quot; + result);
+  62 |         
+  63 |         // Test structured naming
+  64 |         result = simulator.lookupResource(&quot;/services/nodeb-service&quot;, &quot;structured&quot;);
+  65 |         System.out.println(&quot;Structured lookup result: &quot; + result);
+  66 |         
+  67 |         // Test DNS
+  68 |         result = simulator.lookupResource(&quot;nodec-service.example.com&quot;, &quot;dns&quot;);
+  69 |         System.out.println(&quot;DNS lookup result: &quot; + result);
+  70 |         
+  71 |         // Test non-existent resource
+  72 |         result = simulator.lookupResource(&quot;nonexistent&quot;, &quot;flat&quot;);
+  73 |         System.out.println(&quot;Non-existent lookup result: &quot; + result);
+  74 |     }
+  75 |     
+  76 |     private static void testOperations(DistributedSystemSimulator simulator) {
+  77 |         // Test PUT operations
+  78 |         simulator.performOperation(&quot;NodeA&quot;, &quot;PUT&quot;, &quot;testKey1&quot;, &quot;testValue1&quot;);
+  79 |         simulator.performOperation(&quot;NodeB&quot;, &quot;PUT&quot;, &quot;testKey2&quot;, &quot;testValue2&quot;);
+  80 |         
+  81 |         // Test GET operations
+  82 |         simulator.performOperation(&quot;NodeA&quot;, &quot;GET&quot;, &quot;testKey1&quot;, &quot;&quot;);
+  83 |         simulator.performOperation(&quot;NodeC&quot;, &quot;GET&quot;, &quot;testKey2&quot;, &quot;&quot;);
+  84 |         
+  85 |         // Test threading operations
+  86 |         simulator.performOperation(&quot;NodeA&quot;, &quot;DEPOSIT&quot;, &quot;&quot;, &quot;&quot;);
+  87 |         simulator.performOperation(&quot;NodeB&quot;, &quot;WITHDRAW&quot;, &quot;&quot;, &quot;&quot;);
+  88 |         simulator.performOperation(&quot;NodeC&quot;, &quot;DEPOSIT&quot;, &quot;&quot;, &quot;&quot;);
+  89 |         
+  90 |         // Test DELETE operations
+  91 |         simulator.performOperation(&quot;NodeA&quot;, &quot;DELETE&quot;, &quot;testKey1&quot;, &quot;&quot;);
+  92 |     }
+  93 |     
+  94 |     private static void testFailureScenarios(DistributedSystemSimulator simulator) {
+  95 |         // Simulate node failure
+  96 |         simulator.simulateNodeFailure(&quot;NodeB&quot;);
+  97 |         
+  98 |         // Try operations on failed node
+  99 |         simulator.performOperation(&quot;NodeB&quot;, &quot;PUT&quot;, &quot;failTest&quot;, &quot;value&quot;);
+ 100 |         
+ 101 |         // Wait a bit
+ 102 |         try {
+ 103 |             Thread.sleep(1000);
+ 104 |         } catch (InterruptedException e) {
+ 105 |             Thread.currentThread().interrupt();
+ 106 |         }
+ 107 |         
+ 108 |         // Recover node
+ 109 |         simulator.recoverNode(&quot;NodeB&quot;);
+ 110 |         
+ 111 |         // Test operation after recovery
+ 112 |         simulator.performOperation(&quot;NodeB&quot;, &quot;PUT&quot;, &quot;recoveryTest&quot;, &quot;value&quot;);
+ 113 |     }
+ 114 |     
+ 115 |     private static void showMetrics(DistributedSystemSimulator simulator) {
+ 116 |         java.util.List&lt;PerformanceMetric&gt; metrics = simulator.getMetrics();
+ 117 |         
+ 118 |         if (metrics.isEmpty()) {
+ 119 |             System.out.println(&quot;No metrics collected yet.&quot;);
+ 120 |             return;
+ 121 |         }
+ 122 |         
+ 123 |         PerformanceMetric latest = metrics.get(metrics.size() - 1);
+ 124 |         System.out.println(&quot;Latest metrics:&quot;);
+ 125 |         System.out.println(&quot;- Total Operations: &quot; + latest.getTotalOperations());
+ 126 |         System.out.println(&quot;- Consistency Violations: &quot; + 
+ 127 |                          String.format(&quot;%.2f%%&quot;, latest.getConsistencyViolations() * 100));
+ 128 |         System.out.println(&quot;- Average Latency: &quot; + 
+ 129 |                          String.format(&quot;%.2f ms&quot;, latest.getAverageLatency()));
+ 130 |         
+ 131 |         if (metrics.size() &gt; 1) {
+ 132 |             System.out.println(&quot;\nMetrics history (&quot; + metrics.size() + &quot; entries):&quot;);
+ 133 |             for (int i = Math.max(0, metrics.size() - 3); i &lt; metrics.size(); i++) {
+ 134 |                 PerformanceMetric metric = metrics.get(i);
+ 135 |                 System.out.println(&quot;  &quot; + metric);
+ 136 |             }
+ 137 |         }
+ 138 |     }
+ 139 | } 
+</pre>
+
+    <div class="file-header" id="DNSSimulator_java">
+        <h2>DNSSimulator.java</h2>
+        <div class="file-path">File: DNSSimulator.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 138</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | import java.util.*;
+   4 | import java.util.concurrent.ConcurrentHashMap;
+   5 | 
+   6 | /**
+   7 |  * DNS simulator for domain name resolution
+   8 |  * Maps domain names to IP addresses
+   9 |  */
+  10 | public class DNSSimulator {
+  11 |     private final Map&lt;String, String&gt; domainToIp;
+  12 | 
+  13 |     public DNSSimulator() {
+  14 |         this.domainToIp = new ConcurrentHashMap&lt;&gt;();
+  15 |         initializeDefaultEntries();
+  16 |     }
+  17 | 
+  18 |     /**
+  19 |      * Initialize with some default DNS entries
+  20 |      */
+  21 |     private void initializeDefaultEntries() {
+  22 |         register(&quot;localhost&quot;, &quot;127.0.0.1&quot;);
+  23 |         register(&quot;example.com&quot;, &quot;192.0.2.1&quot;);
+  24 |         register(&quot;www.example.com&quot;, &quot;192.0.2.1&quot;);
+  25 |     }
+  26 | 
+  27 |     /**
+  28 |      * Register a domain name to IP address mapping
+  29 |      */
+  30 |     public void register(String domainName, String ipAddress) {
+  31 |         domainToIp.put(domainName.toLowerCase(), ipAddress);
+  32 |         System.out.println(&quot;DNS: Registered &#x27;&quot; + domainName + &quot;&#x27; -&gt; &quot; + ipAddress);
+  33 |     }
+  34 | 
+  35 |     /**
+  36 |      * Lookup IP address for a domain name
+  37 |      */
+  38 |     public Optional&lt;String&gt; lookup(String domainName) {
+  39 |         String ip = domainToIp.get(domainName.toLowerCase());
+  40 |         if (ip != null) {
+  41 |             System.out.println(&quot;DNS: Resolved &#x27;&quot; + domainName + &quot;&#x27; -&gt; &quot; + ip);
+  42 |             return Optional.of(ip);
+  43 |         } else {
+  44 |             System.out.println(&quot;DNS: Cannot resolve &#x27;&quot; + domainName + &quot;&#x27;&quot;);
+  45 |             return Optional.empty();
+  46 |         }
+  47 |     }
+  48 | 
+  49 |     /**
+  50 |      * Reverse DNS lookup - find domain name for IP
+  51 |      */
+  52 |     public Optional&lt;String&gt; reverseLookup(String ipAddress) {
+  53 |         for (Map.Entry&lt;String, String&gt; entry : domainToIp.entrySet()) {
+  54 |             if (entry.getValue().equals(ipAddress)) {
+  55 |                 System.out.println(&quot;DNS: Reverse lookup &quot; + ipAddress + &quot; -&gt; &quot; + entry.getKey());
+  56 |                 return Optional.of(entry.getKey());
+  57 |             }
+  58 |         }
+  59 |         System.out.println(&quot;DNS: No domain found for IP &quot; + ipAddress);
+  60 |         return Optional.empty();
+  61 |     }
+  62 | 
+  63 |     /**
+  64 |      * Remove a domain name entry
+  65 |      */
+  66 |     public boolean remove(String domainName) {
+  67 |         String removed = domainToIp.remove(domainName.toLowerCase());
+  68 |         if (removed != null) {
+  69 |             System.out.println(&quot;DNS: Removed &#x27;&quot; + domainName + &quot;&#x27;&quot;);
+  70 |             return true;
+  71 |         }
+  72 |         return false;
+  73 |     }
+  74 | 
+  75 |     /**
+  76 |      * Get all registered domain names
+  77 |      */
+  78 |     public Set&lt;String&gt; getAllDomains() {
+  79 |         return new HashSet&lt;&gt;(domainToIp.keySet());
+  80 |     }
+  81 | 
+  82 |     /**
+  83 |      * Get the number of DNS entries
+  84 |      */
+  85 |     public int size() {
+  86 |         return domainToIp.size();
+  87 |     }
+  88 | 
+  89 |     /**
+  90 |      * Check if a domain is registered
+  91 |      */
+  92 |     public boolean contains(String domainName) {
+  93 |         return domainToIp.containsKey(domainName.toLowerCase());
+  94 |     }
+  95 | 
+  96 |     /**
+  97 |      * Clear all DNS entries (except defaults)
+  98 |      */
+  99 |     public void clear() {
+ 100 |         domainToIp.clear();
+ 101 |         initializeDefaultEntries();
+ 102 |     }
+ 103 | 
+ 104 |     /**
+ 105 |      * Simulate DNS cache expiration
+ 106 |      */
+ 107 |     public void expireCache() {
+ 108 |         System.out.println(&quot;DNS: Cache expired, refreshing entries...&quot;);
+ 109 |         // In a real DNS system, this would reload from authoritative servers
+ 110 |         // For simulation, we just print a message
+ 111 |     }
+ 112 | 
+ 113 |     /**
+ 114 |      * Print all DNS entries
+ 115 |      */
+ 116 |     public void printAll() {
+ 117 |         System.out.println(&quot;DNS Simulator entries:&quot;);
+ 118 |         List&lt;String&gt; sortedDomains = new ArrayList&lt;&gt;(domainToIp.keySet());
+ 119 |         Collections.sort(sortedDomains);
+ 120 |         
+ 121 |         for (String domain : sortedDomains) {
+ 122 |             System.out.println(&quot;  &quot; + domain + &quot; -&gt; &quot; + domainToIp.get(domain));
+ 123 |         }
+ 124 |     }
+ 125 | 
+ 126 |     /**
+ 127 |      * Simulate DNS query with realistic delay
+ 128 |      */
+ 129 |     public Optional&lt;String&gt; lookupWithDelay(String domainName) {
+ 130 |         try {
+ 131 |             // Simulate network delay for DNS resolution
+ 132 |             Thread.sleep(new Random().nextInt(50) + 10); // 10-60ms delay
+ 133 |         } catch (InterruptedException e) {
+ 134 |             Thread.currentThread().interrupt();
+ 135 |         }
+ 136 |         return lookup(domainName);
+ 137 |     }
+ 138 | } 
+</pre>
+
+    <div class="file-header" id="DistributedSystemSimulator_java">
+        <h2>DistributedSystemSimulator.java</h2>
+        <div class="file-path">File: DistributedSystemSimulator.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 305</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | import java.util.*;
+   4 | import java.util.concurrent.*;
+   5 | import java.awt.event.*;
+   6 | import javax.swing.*;
+   7 | import java.awt.*;
+   8 | 
+   9 | /**
+  10 |  * Integrated Distributed System Simulator
+  11 |  * Combines threading, consistency models, and naming services
+  12 |  */
+  13 | public class DistributedSystemSimulator {
+  14 |     private final Map&lt;String, ServiceNode&gt; nodes;
+  15 |     private final CentralCoordinator coordinator;
+  16 |     private final ExecutorService threadPool;
+  17 |     private final FlatNamingService flatNaming;
+  18 |     private final StructuredNamingService structuredNaming;
+  19 |     private final DNSSimulator dnsService;
+  20 |     private final Random random;
+  21 |     
+  22 |     // Performance metrics
+  23 |     private final java.util.List&lt;PerformanceMetric&gt; metrics;
+  24 |     private volatile boolean isRunning;
+  25 |     
+  26 |     public DistributedSystemSimulator() {
+  27 |         this.nodes = new ConcurrentHashMap&lt;&gt;();
+  28 |         this.coordinator = new CentralCoordinator();
+  29 |         this.threadPool = Executors.newCachedThreadPool();
+  30 |         this.flatNaming = new FlatNamingService();
+  31 |         this.structuredNaming = new StructuredNamingService();
+  32 |         this.dnsService = new DNSSimulator();
+  33 |         this.random = new Random();
+  34 |         this.metrics = Collections.synchronizedList(new ArrayList&lt;&gt;());
+  35 |         this.isRunning = false;
+  36 |         
+  37 |         initializeSystem();
+  38 |     }
+  39 |     
+  40 |     private void initializeSystem() {
+  41 |         // Create service nodes
+  42 |         String[] nodeIds = {&quot;NodeA&quot;, &quot;NodeB&quot;, &quot;NodeC&quot;};
+  43 |         for (String nodeId : nodeIds) {
+  44 |             ServiceNode node = new ServiceNode(nodeId, coordinator, flatNaming, structuredNaming, dnsService);
+  45 |             nodes.put(nodeId, node);
+  46 |             
+  47 |             // Register in naming services
+  48 |             String service = nodeId.toLowerCase() + &quot;-service&quot;;
+  49 |             flatNaming.register(service, new Resource(service, nodeId));
+  50 |             structuredNaming.register(&quot;/services/&quot; + service, new Resource(service, nodeId));
+  51 |             dnsService.register(service + &quot;.example.com&quot;, &quot;192.168.1.&quot; + (nodes.size()));
+  52 |             
+  53 |             System.out.println(&quot;Initialized &quot; + nodeId + &quot; with all naming services&quot;);
+  54 |         }
+  55 |     }
+  56 |     
+  57 |     public void startSimulation() {
+  58 |         isRunning = true;
+  59 |         
+  60 |         // Start each node as a separate thread
+  61 |         for (ServiceNode node : nodes.values()) {
+  62 |             threadPool.submit(() -&gt; {
+  63 |                 while (isRunning) {
+  64 |                     try {
+  65 |                         node.performRandomOperation();
+  66 |                         Thread.sleep(random.nextInt(1000) + 500); // 0.5-1.5s intervals
+  67 |                     } catch (InterruptedException e) {
+  68 |                         Thread.currentThread().interrupt();
+  69 |                         break;
+  70 |                     }
+  71 |                 }
+  72 |             });
+  73 |         }
+  74 |         
+  75 |         // Start coordination and synchronization services
+  76 |         threadPool.submit(this::coordinationService);
+  77 |         threadPool.submit(this::eventualConsistencyService);
+  78 |         threadPool.submit(this::performanceMonitor);
+  79 |         
+  80 |         System.out.println(&quot;🚀 Distributed System Simulation Started!&quot;);
+  81 |     }
+  82 |     
+  83 |     private void coordinationService() {
+  84 |         while (isRunning) {
+  85 |             try {
+  86 |                 // Sequential consistency - apply operations in order
+  87 |                 java.util.List&lt;Operation&gt; pendingOps = coordinator.getPendingOperations();
+  88 |                 for (Operation op : pendingOps) {
+  89 |                     for (ServiceNode node : nodes.values()) {
+  90 |                         node.applyOperation(op);
+  91 |                     }
+  92 |                 }
+  93 |                 Thread.sleep(200);
+  94 |             } catch (InterruptedException e) {
+  95 |                 Thread.currentThread().interrupt();
+  96 |                 break;
+  97 |             }
+  98 |         }
+  99 |     }
+ 100 |     
+ 101 |     private void eventualConsistencyService() {
+ 102 |         while (isRunning) {
+ 103 |             try {
+ 104 |                 // Randomly sync nodes for eventual consistency
+ 105 |                 java.util.List&lt;ServiceNode&gt; nodeList = new ArrayList&lt;&gt;(nodes.values());
+ 106 |                 if (nodeList.size() &gt; 1) {
+ 107 |                     ServiceNode node = nodeList.get(random.nextInt(nodeList.size()));
+ 108 |                     node.syncWithCoordinator();
+ 109 |                     
+ 110 |                     // Simulate network partition recovery
+ 111 |                     if (random.nextDouble() &lt; 0.1) { // 10% chance
+ 112 |                         System.out.println(&quot;🌐 Network partition recovery - syncing all nodes&quot;);
+ 113 |                         for (ServiceNode n : nodes.values()) {
+ 114 |                             n.syncWithCoordinator();
+ 115 |                         }
+ 116 |                     }
+ 117 |                 }
+ 118 |                 Thread.sleep(1000);
+ 119 |             } catch (InterruptedException e) {
+ 120 |                 Thread.currentThread().interrupt();
+ 121 |                 break;
+ 122 |             }
+ 123 |         }
+ 124 |     }
+ 125 |     
+ 126 |     private void performanceMonitor() {
+ 127 |         while (isRunning) {
+ 128 |             try {
+ 129 |                 // Collect performance metrics
+ 130 |                 long timestamp = System.currentTimeMillis();
+ 131 |                 int totalOperations = coordinator.getTotalOperations();
+ 132 |                 double consistencyViolations = calculateConsistencyViolations();
+ 133 |                 double avgLatency = calculateAverageLatency();
+ 134 |                 
+ 135 |                 PerformanceMetric metric = new PerformanceMetric(
+ 136 |                     timestamp, totalOperations, consistencyViolations, avgLatency);
+ 137 |                 metrics.add(metric);
+ 138 |                 
+ 139 |                 Thread.sleep(2000);
+ 140 |             } catch (InterruptedException e) {
+ 141 |                 Thread.currentThread().interrupt();
+ 142 |                 break;
+ 143 |             }
+ 144 |         }
+ 145 |     }
+ 146 |     
+ 147 |     private double calculateConsistencyViolations() {
+ 148 |         // Simplified consistency violation calculation
+ 149 |         int violations = 0;
+ 150 |         int totalChecks = 0;
+ 151 |         
+ 152 |         for (ServiceNode node1 : nodes.values()) {
+ 153 |             for (ServiceNode node2 : nodes.values()) {
+ 154 |                 if (!node1.equals(node2)) {
+ 155 |                     if (Math.abs(node1.getLastSequence() - node2.getLastSequence()) &gt; 5) {
+ 156 |                         violations++;
+ 157 |                     }
+ 158 |                     totalChecks++;
+ 159 |                 }
+ 160 |             }
+ 161 |         }
+ 162 |         
+ 163 |         return totalChecks &gt; 0 ? (double) violations / totalChecks : 0.0;
+ 164 |     }
+ 165 |     
+ 166 |     private double calculateAverageLatency() {
+ 167 |         return random.nextGaussian() * 50 + 150; // Simulated latency
+ 168 |     }
+ 169 |     
+ 170 |     public void performOperation(String nodeId, String operation, String key, String value) {
+ 171 |         ServiceNode node = nodes.get(nodeId);
+ 172 |         if (node != null) {
+ 173 |             node.performOperation(operation, key, value);
+ 174 |         }
+ 175 |     }
+ 176 |     
+ 177 |     public void simulateNodeFailure(String nodeId) {
+ 178 |         ServiceNode node = nodes.get(nodeId);
+ 179 |         if (node != null) {
+ 180 |             node.simulateFailure();
+ 181 |             System.out.println(&quot;💥 Node &quot; + nodeId + &quot; failed!&quot;);
+ 182 |         }
+ 183 |     }
+ 184 |     
+ 185 |     public void recoverNode(String nodeId) {
+ 186 |         ServiceNode node = nodes.get(nodeId);
+ 187 |         if (node != null) {
+ 188 |             node.recover();
+ 189 |             System.out.println(&quot;🔄 Node &quot; + nodeId + &quot; recovered!&quot;);
+ 190 |         }
+ 191 |     }
+ 192 |     
+ 193 |     public String lookupResource(String resourceName, String namingType) {
+ 194 |         long startTime = System.currentTimeMillis();
+ 195 |         String result = null;
+ 196 |         
+ 197 |         try {
+ 198 |             switch (namingType.toLowerCase()) {
+ 199 |                 case &quot;flat&quot;:
+ 200 |                     result = flatNaming.lookup(resourceName).orElse(&quot;Not found&quot;);
+ 201 |                     break;
+ 202 |                 case &quot;structured&quot;:
+ 203 |                     result = structuredNaming.lookup(resourceName).orElse(&quot;Not found&quot;);
+ 204 |                     break;
+ 205 |                 case &quot;dns&quot;:
+ 206 |                     result = dnsService.lookup(resourceName).orElse(&quot;Not found&quot;);
+ 207 |                     break;
+ 208 |                 default:
+ 209 |                     result = &quot;Invalid naming type&quot;;
+ 210 |             }
+ 211 |         } finally {
+ 212 |             long latency = System.currentTimeMillis() - startTime;
+ 213 |             System.out.println(&quot;🔍 &quot; + namingType + &quot; lookup for &#x27;&quot; + resourceName + &quot;&#x27;: &quot; + result + &quot; (&quot; + latency + &quot;ms)&quot;);
+ 214 |         }
+ 215 |         
+ 216 |         return result;
+ 217 |     }
+ 218 |     
+ 219 |     public void stopSimulation() {
+ 220 |         isRunning = false;
+ 221 |         threadPool.shutdown();
+ 222 |         try {
+ 223 |             if (!threadPool.awaitTermination(5, TimeUnit.SECONDS)) {
+ 224 |                 threadPool.shutdownNow();
+ 225 |             }
+ 226 |         } catch (InterruptedException e) {
+ 227 |             threadPool.shutdownNow();
+ 228 |             Thread.currentThread().interrupt();
+ 229 |         }
+ 230 |         System.out.println(&quot;🛑 Simulation stopped&quot;);
+ 231 |     }
+ 232 |     
+ 233 |     public void printSystemStatus() {
+ 234 |         System.out.println(&quot;\n=== SYSTEM STATUS ===&quot;);
+ 235 |         coordinator.printLog();
+ 236 |         
+ 237 |         System.out.println(&quot;\n--- Node Status ---&quot;);
+ 238 |         for (ServiceNode node : nodes.values()) {
+ 239 |             node.printStatus();
+ 240 |         }
+ 241 |         
+ 242 |         System.out.println(&quot;\n--- Naming Services ---&quot;);
+ 243 |         System.out.println(&quot;Flat naming entries: &quot; + flatNaming.size());
+ 244 |         System.out.println(&quot;Structured naming entries: &quot; + structuredNaming.size());
+ 245 |         System.out.println(&quot;DNS entries: &quot; + dnsService.size());
+ 246 |     }
+ 247 |     
+ 248 |     public java.util.List&lt;PerformanceMetric&gt; getMetrics() {
+ 249 |         return new ArrayList&lt;&gt;(metrics);
+ 250 |     }
+ 251 |     
+ 252 |     public Set&lt;String&gt; getNodeIds() {
+ 253 |         return new HashSet&lt;&gt;(nodes.keySet());
+ 254 |     }
+ 255 |     
+ 256 |     public boolean isRunning() {
+ 257 |         return isRunning;
+ 258 |     }
+ 259 |     
+ 260 |     // DNS Management Methods
+ 261 |     public void addDNSEntry(String domain, String ip) {
+ 262 |         dnsService.register(domain, ip);
+ 263 |     }
+ 264 |     
+ 265 |     public void removeDNSEntry(String domain) {
+ 266 |         dnsService.remove(domain);
+ 267 |     }
+ 268 |     
+ 269 |     public void clearDNSEntries() {
+ 270 |         dnsService.clear();
+ 271 |     }
+ 272 |     
+ 273 |     public java.util.Set&lt;String&gt; getAllDNSDomains() {
+ 274 |         return dnsService.getAllDomains();
+ 275 |     }
+ 276 |     
+ 277 |     public String lookupDNSEntry(String domain) {
+ 278 |         return dnsService.lookup(domain).orElse(null);
+ 279 |     }
+ 280 |     
+ 281 |     // Thread Configuration Methods
+ 282 |     private int threadPoolSize = 5;
+ 283 |     private int simulationInterval = 1000;
+ 284 |     
+ 285 |     public void configureThreads(int poolSize, int interval) {
+ 286 |         this.threadPoolSize = poolSize;
+ 287 |         this.simulationInterval = interval;
+ 288 |         System.out.println(&quot;Thread configuration updated: Pool size=&quot; + poolSize + &quot;, Interval=&quot; + interval + &quot;ms&quot;);
+ 289 |         // Note: Changes take effect on next simulation start
+ 290 |     }
+ 291 |     
+ 292 |     public int getThreadPoolSize() {
+ 293 |         return threadPoolSize;
+ 294 |     }
+ 295 |     
+ 296 |     public int getSimulationInterval() {
+ 297 |         return simulationInterval;
+ 298 |     }
+ 299 |     
+ 300 |     public static void main(String[] args) {
+ 301 |         SwingUtilities.invokeLater(() -&gt; {
+ 302 |             new SimulatorGUI().setVisible(true);
+ 303 |         });
+ 304 |     }
+ 305 | } 
+</pre>
+
+    <div class="file-header" id="FlatNamingService_java">
+        <h2>FlatNamingService.java</h2>
+        <div class="file-path">File: FlatNamingService.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 88</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | import java.util.*;
+   4 | import java.util.concurrent.ConcurrentHashMap;
+   5 | 
+   6 | /**
+   7 |  * Flat naming service using hash table (dictionary) approach
+   8 |  * Provides simple key-value mapping for resource names
+   9 |  */
+  10 | public class FlatNamingService {
+  11 |     private final Map&lt;String, Resource&gt; nameToResource;
+  12 | 
+  13 |     public FlatNamingService() {
+  14 |         this.nameToResource = new ConcurrentHashMap&lt;&gt;();
+  15 |     }
+  16 | 
+  17 |     /**
+  18 |      * Register a resource with a flat name
+  19 |      */
+  20 |     public void register(String name, Resource resource) {
+  21 |         nameToResource.put(name.toLowerCase(), resource);
+  22 |         System.out.println(&quot;Flat naming: Registered &#x27;&quot; + name + &quot;&#x27; -&gt; &quot; + resource.getLocation());
+  23 |     }
+  24 | 
+  25 |     /**
+  26 |      * Lookup a resource by flat name
+  27 |      */
+  28 |     public Optional&lt;String&gt; lookup(String name) {
+  29 |         Resource resource = nameToResource.get(name.toLowerCase());
+  30 |         if (resource != null) {
+  31 |             System.out.println(&quot;Flat naming: Found &#x27;&quot; + name + &quot;&#x27; -&gt; &quot; + resource.getLocation());
+  32 |             return Optional.of(resource.getLocation());
+  33 |         } else {
+  34 |             System.out.println(&quot;Flat naming: Not found &#x27;&quot; + name + &quot;&#x27;&quot;);
+  35 |             return Optional.empty();
+  36 |         }
+  37 |     }
+  38 | 
+  39 |     /**
+  40 |      * Remove a resource from the naming service
+  41 |      */
+  42 |     public boolean remove(String name) {
+  43 |         Resource removed = nameToResource.remove(name.toLowerCase());
+  44 |         if (removed != null) {
+  45 |             System.out.println(&quot;Flat naming: Removed &#x27;&quot; + name + &quot;&#x27;&quot;);
+  46 |             return true;
+  47 |         }
+  48 |         return false;
+  49 |     }
+  50 | 
+  51 |     /**
+  52 |      * Get all registered names
+  53 |      */
+  54 |     public Set&lt;String&gt; getAllNames() {
+  55 |         return new HashSet&lt;&gt;(nameToResource.keySet());
+  56 |     }
+  57 | 
+  58 |     /**
+  59 |      * Get the number of entries
+  60 |      */
+  61 |     public int size() {
+  62 |         return nameToResource.size();
+  63 |     }
+  64 | 
+  65 |     /**
+  66 |      * Check if a name exists
+  67 |      */
+  68 |     public boolean contains(String name) {
+  69 |         return nameToResource.containsKey(name.toLowerCase());
+  70 |     }
+  71 | 
+  72 |     /**
+  73 |      * Clear all entries
+  74 |      */
+  75 |     public void clear() {
+  76 |         nameToResource.clear();
+  77 |     }
+  78 | 
+  79 |     /**
+  80 |      * Print all entries
+  81 |      */
+  82 |     public void printAll() {
+  83 |         System.out.println(&quot;Flat Naming Service entries:&quot;);
+  84 |         for (Map.Entry&lt;String, Resource&gt; entry : nameToResource.entrySet()) {
+  85 |             System.out.println(&quot;  &quot; + entry.getKey() + &quot; -&gt; &quot; + entry.getValue().getLocation());
+  86 |         }
+  87 |     }
+  88 | } 
+</pre>
+
+    <div class="file-header" id="Operation_java">
+        <h2>Operation.java</h2>
+        <div class="file-path">File: Operation.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 37</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | /**
+   4 |  * Represents an operation in the distributed system
+   5 |  * Used for maintaining operation logs and ensuring consistency
+   6 |  */
+   7 | public class Operation {
+   8 |     private final int sequenceNumber;
+   9 |     private final String type; // &quot;PUT&quot;, &quot;DELETE&quot;, &quot;GET&quot;
+  10 |     private final String key;
+  11 |     private final String value;
+  12 |     private final long timestamp;
+  13 |     private final String clientId;
+  14 | 
+  15 |     public Operation(int sequenceNumber, String type, String key, String value, String clientId) {
+  16 |         this.sequenceNumber = sequenceNumber;
+  17 |         this.type = type;
+  18 |         this.key = key;
+  19 |         this.value = value;
+  20 |         this.clientId = clientId;
+  21 |         this.timestamp = System.currentTimeMillis();
+  22 |     }
+  23 | 
+  24 |     // Getters
+  25 |     public int getSequenceNumber() { return sequenceNumber; }
+  26 |     public String getType() { return type; }
+  27 |     public String getKey() { return key; }
+  28 |     public String getValue() { return value; }
+  29 |     public long getTimestamp() { return timestamp; }
+  30 |     public String getClientId() { return clientId; }
+  31 | 
+  32 |     @Override
+  33 |     public String toString() {
+  34 |         return String.format(&quot;Op[seq=%d, type=%s, key=%s, value=%s, client=%s]&quot;, 
+  35 |                            sequenceNumber, type, key, value, clientId);
+  36 |     }
+  37 | } 
+</pre>
+
+    <div class="file-header" id="PerformanceMetric_java">
+        <h2>PerformanceMetric.java</h2>
+        <div class="file-path">File: PerformanceMetric.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 41</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | /**
+   4 |  * Performance metric data structure for tracking system performance
+   5 |  */
+   6 | public class PerformanceMetric {
+   7 |     private final long timestamp;
+   8 |     private final int totalOperations;
+   9 |     private final double consistencyViolations;
+  10 |     private final double averageLatency;
+  11 | 
+  12 |     public PerformanceMetric(long timestamp, int totalOperations, 
+  13 |                            double consistencyViolations, double averageLatency) {
+  14 |         this.timestamp = timestamp;
+  15 |         this.totalOperations = totalOperations;
+  16 |         this.consistencyViolations = consistencyViolations;
+  17 |         this.averageLatency = averageLatency;
+  18 |     }
+  19 | 
+  20 |     public long getTimestamp() {
+  21 |         return timestamp;
+  22 |     }
+  23 | 
+  24 |     public int getTotalOperations() {
+  25 |         return totalOperations;
+  26 |     }
+  27 | 
+  28 |     public double getConsistencyViolations() {
+  29 |         return consistencyViolations;
+  30 |     }
+  31 | 
+  32 |     public double getAverageLatency() {
+  33 |         return averageLatency;
+  34 |     }
+  35 | 
+  36 |     @Override
+  37 |     public String toString() {
+  38 |         return String.format(&quot;Metric[time=%d, ops=%d, violations=%.2f%%, latency=%.2fms]&quot;,
+  39 |                            timestamp, totalOperations, consistencyViolations * 100, averageLatency);
+  40 |     }
+  41 | } 
+</pre>
+
+    <div class="file-header" id="Resource_java">
+        <h2>Resource.java</h2>
+        <div class="file-path">File: Resource.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 41</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | /**
+   4 |  * Represents a resource in the distributed system
+   5 |  * Used by naming services to map names to locations
+   6 |  */
+   7 | public class Resource {
+   8 |     private final String resourceId;
+   9 |     private final String location;
+  10 | 
+  11 |     public Resource(String resourceId, String location) {
+  12 |         this.resourceId = resourceId;
+  13 |         this.location = location;
+  14 |     }
+  15 | 
+  16 |     public String getResourceId() {
+  17 |         return resourceId;
+  18 |     }
+  19 | 
+  20 |     public String getLocation() {
+  21 |         return location;
+  22 |     }
+  23 | 
+  24 |     @Override
+  25 |     public String toString() {
+  26 |         return String.format(&quot;Resource[id=%s, location=%s]&quot;, resourceId, location);
+  27 |     }
+  28 | 
+  29 |     @Override
+  30 |     public boolean equals(Object obj) {
+  31 |         if (this == obj) return true;
+  32 |         if (obj == null || getClass() != obj.getClass()) return false;
+  33 |         Resource resource = (Resource) obj;
+  34 |         return resourceId.equals(resource.resourceId) &amp;&amp; location.equals(resource.location);
+  35 |     }
+  36 | 
+  37 |     @Override
+  38 |     public int hashCode() {
+  39 |         return resourceId.hashCode() + location.hashCode();
+  40 |     }
+  41 | } 
+</pre>
+
+    <div class="file-header" id="ServiceNode_java">
+        <h2>ServiceNode.java</h2>
+        <div class="file-path">File: ServiceNode.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 264</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | import java.util.*;
+   4 | import java.util.concurrent.ConcurrentHashMap;
+   5 | 
+   6 | /**
+   7 |  * Service node that represents a distributed system participant
+   8 |  * Combines threading, data storage, and consistency models
+   9 |  */
+  10 | public class ServiceNode {
+  11 |     private final String nodeId;
+  12 |     private final Map&lt;String, String&gt; dataStore;
+  13 |     private final CentralCoordinator coordinator;
+  14 |     private final FlatNamingService flatNaming;
+  15 |     private final StructuredNamingService structuredNaming;
+  16 |     private final DNSSimulator dnsService;
+  17 |     private final Random random;
+  18 |     
+  19 |     // Client-centric consistency tracking
+  20 |     private final Map&lt;String, Integer&gt; clientVersions;
+  21 |     private int lastAppliedSequence;
+  22 |     private boolean isAvailable;
+  23 |     
+  24 |     // Threading and resource management
+  25 |     private int sharedResource;
+  26 |     private final Object resourceLock;
+  27 | 
+  28 |     public ServiceNode(String nodeId, CentralCoordinator coordinator, 
+  29 |                       FlatNamingService flatNaming, StructuredNamingService structuredNaming,
+  30 |                       DNSSimulator dnsService) {
+  31 |         this.nodeId = nodeId;
+  32 |         this.coordinator = coordinator;
+  33 |         this.flatNaming = flatNaming;
+  34 |         this.structuredNaming = structuredNaming;
+  35 |         this.dnsService = dnsService;
+  36 |         this.dataStore = new ConcurrentHashMap&lt;&gt;();
+  37 |         this.clientVersions = new ConcurrentHashMap&lt;&gt;();
+  38 |         this.random = new Random();
+  39 |         this.lastAppliedSequence = 0;
+  40 |         this.isAvailable = true;
+  41 |         this.sharedResource = 100; // Initial resource value for threading demo
+  42 |         this.resourceLock = new Object();
+  43 |     }
+  44 | 
+  45 |     /**
+  46 |      * Perform a random operation (used in simulation)
+  47 |      */
+  48 |     public void performRandomOperation() {
+  49 |         if (!isAvailable) return;
+  50 |         
+  51 |         String[] operations = {&quot;PUT&quot;, &quot;GET&quot;, &quot;DELETE&quot;};
+  52 |         String operation = operations[random.nextInt(operations.length)];
+  53 |         String key = &quot;key&quot; + random.nextInt(10);
+  54 |         String value = &quot;value&quot; + random.nextInt(100);
+  55 |         
+  56 |         performOperation(operation, key, value);
+  57 |     }
+  58 | 
+  59 |     /**
+  60 |      * Perform a specific operation
+  61 |      */
+  62 |     public void performOperation(String operation, String key, String value) {
+  63 |         if (!isAvailable) {
+  64 |             System.out.println(nodeId + &quot;: Node unavailable for operation &quot; + operation);
+  65 |             return;
+  66 |         }
+  67 | 
+  68 |         String clientId = nodeId + &quot;-client&quot;;
+  69 |         
+  70 |         switch (operation.toUpperCase()) {
+  71 |             case &quot;PUT&quot;:
+  72 |                 Operation putOp = coordinator.submitOperation(&quot;PUT&quot;, key, value, clientId);
+  73 |                 applyOperation(putOp);
+  74 |                 updateClientVersion(clientId, putOp.getSequenceNumber());
+  75 |                 break;
+  76 |                 
+  77 |             case &quot;GET&quot;:
+  78 |                 String retrievedValue = get(key);
+  79 |                 System.out.println(nodeId + &quot;: GET &quot; + key + &quot; = &quot; + retrievedValue);
+  80 |                 break;
+  81 |                 
+  82 |             case &quot;DELETE&quot;:
+  83 |                 Operation deleteOp = coordinator.submitOperation(&quot;DELETE&quot;, key, null, clientId);
+  84 |                 applyOperation(deleteOp);
+  85 |                 updateClientVersion(clientId, deleteOp.getSequenceNumber());
+  86 |                 break;
+  87 |                 
+  88 |             case &quot;DEPOSIT&quot;:
+  89 |                 performDeposit();
+  90 |                 break;
+  91 |                 
+  92 |             case &quot;WITHDRAW&quot;:
+  93 |                 performWithdraw();
+  94 |                 break;
+  95 |                 
+  96 |             default:
+  97 |                 System.out.println(nodeId + &quot;: Unknown operation &quot; + operation);
+  98 |         }
+  99 |     }
+ 100 | 
+ 101 |     /**
+ 102 |      * Apply an operation to this node (for consistency)
+ 103 |      */
+ 104 |     public boolean applyOperation(Operation operation) {
+ 105 |         if (!isAvailable) return false;
+ 106 |         
+ 107 |         try {
+ 108 |             // Simulate network delay for eventual consistency
+ 109 |             if (random.nextBoolean()) {
+ 110 |                 Thread.sleep(random.nextInt(100) + 50); // 50-150ms delay
+ 111 |             }
+ 112 |             
+ 113 |             switch (operation.getType()) {
+ 114 |                 case &quot;PUT&quot;:
+ 115 |                     dataStore.put(operation.getKey(), operation.getValue());
+ 116 |                     break;
+ 117 |                 case &quot;DELETE&quot;:
+ 118 |                     dataStore.remove(operation.getKey());
+ 119 |                     break;
+ 120 |                 default:
+ 121 |                     return false;
+ 122 |             }
+ 123 |             
+ 124 |             lastAppliedSequence = operation.getSequenceNumber();
+ 125 |             System.out.println(nodeId + &quot;: Applied &quot; + operation);
+ 126 |             return true;
+ 127 |             
+ 128 |         } catch (InterruptedException e) {
+ 129 |             Thread.currentThread().interrupt();
+ 130 |             return false;
+ 131 |         }
+ 132 |     }
+ 133 | 
+ 134 |     /**
+ 135 |      * Perform deposit operation (from threading demo)
+ 136 |      */
+ 137 |     public void performDeposit() {
+ 138 |         synchronized (resourceLock) {
+ 139 |             int oldValue = sharedResource;
+ 140 |             try {
+ 141 |                 Thread.sleep(100); // Simulate processing time
+ 142 |                 sharedResource += 10;
+ 143 |                 System.out.println(&quot;[&quot; + nodeId + &quot;] Deposit: &quot; + oldValue + &quot; + 10 = &quot; + sharedResource);
+ 144 |             } catch (InterruptedException e) {
+ 145 |                 Thread.currentThread().interrupt();
+ 146 |             }
+ 147 |         }
+ 148 |     }
+ 149 | 
+ 150 |     /**
+ 151 |      * Perform withdraw operation (from threading demo)
+ 152 |      */
+ 153 |     public void performWithdraw() {
+ 154 |         synchronized (resourceLock) {
+ 155 |             int oldValue = sharedResource;
+ 156 |             if (sharedResource &gt;= 6) {
+ 157 |                 try {
+ 158 |                     Thread.sleep(150); // Simulate processing time
+ 159 |                     sharedResource -= 6;
+ 160 |                     System.out.println(&quot;[&quot; + nodeId + &quot;] Withdraw: &quot; + oldValue + &quot; - 6 = &quot; + sharedResource);
+ 161 |                 } catch (InterruptedException e) {
+ 162 |                     Thread.currentThread().interrupt();
+ 163 |                 }
+ 164 |             } else {
+ 165 |                 System.out.println(&quot;[&quot; + nodeId + &quot;] Withdraw failed: Insufficient funds (&quot; + sharedResource + &quot;)&quot;);
+ 166 |             }
+ 167 |         }
+ 168 |     }
+ 169 | 
+ 170 |     /**
+ 171 |      * Get value with client-centric consistency
+ 172 |      */
+ 173 |     public String get(String key) {
+ 174 |         String value = dataStore.get(key);
+ 175 |         System.out.println(nodeId + &quot;: Read &quot; + key + &quot; = &quot; + value + &quot; (seq: &quot; + lastAppliedSequence + &quot;)&quot;);
+ 176 |         return value;
+ 177 |     }
+ 178 | 
+ 179 |     /**
+ 180 |      * Update client version for client-centric consistency
+ 181 |      */
+ 182 |     private void updateClientVersion(String clientId, int version) {
+ 183 |         clientVersions.put(clientId, version);
+ 184 |     }
+ 185 | 
+ 186 |     /**
+ 187 |      * Check if this node can serve a client based on their last seen version
+ 188 |      */
+ 189 |     public boolean canServeClient(String clientId, int clientVersion) {
+ 190 |         return lastAppliedSequence &gt;= clientVersion;
+ 191 |     }
+ 192 | 
+ 193 |     /**
+ 194 |      * Sync with coordinator for eventual consistency
+ 195 |      */
+ 196 |     public void syncWithCoordinator() {
+ 197 |         if (!isAvailable) return;
+ 198 |         
+ 199 |         List&lt;Operation&gt; missedOperations = coordinator.getOperationsSince(lastAppliedSequence);
+ 200 |         
+ 201 |         if (!missedOperations.isEmpty()) {
+ 202 |             System.out.println(nodeId + &quot;: Syncing &quot; + missedOperations.size() + &quot; missed operations&quot;);
+ 203 |             for (Operation op : missedOperations) {
+ 204 |                 applyOperation(op);
+ 205 |             }
+ 206 |         }
+ 207 |     }
+ 208 | 
+ 209 |     /**
+ 210 |      * Lookup resource using different naming services
+ 211 |      */
+ 212 |     public String lookupResource(String resourceName, String namingType) {
+ 213 |         try {
+ 214 |             switch (namingType.toLowerCase()) {
+ 215 |                 case &quot;flat&quot;:
+ 216 |                     return flatNaming.lookup(resourceName).orElse(&quot;Not found&quot;);
+ 217 |                 case &quot;structured&quot;:
+ 218 |                     return structuredNaming.lookup(resourceName).orElse(&quot;Not found&quot;);
+ 219 |                 case &quot;dns&quot;:
+ 220 |                     return dnsService.lookup(resourceName).orElse(&quot;Not found&quot;);
+ 221 |                 default:
+ 222 |                     return &quot;Invalid naming type&quot;;
+ 223 |             }
+ 224 |         } catch (Exception e) {
+ 225 |             return &quot;Lookup failed: &quot; + e.getMessage();
+ 226 |         }
+ 227 |     }
+ 228 | 
+ 229 |     /**
+ 230 |      * Simulate node failure
+ 231 |      */
+ 232 |     public void simulateFailure() {
+ 233 |         isAvailable = false;
+ 234 |         System.out.println(nodeId + &quot;: Node failed!&quot;);
+ 235 |     }
+ 236 | 
+ 237 |     /**
+ 238 |      * Recover from failure
+ 239 |      */
+ 240 |     public void recover() {
+ 241 |         isAvailable = true;
+ 242 |         syncWithCoordinator(); // Catch up on missed operations
+ 243 |         System.out.println(nodeId + &quot;: Node recovered and synced!&quot;);
+ 244 |     }
+ 245 | 
+ 246 |     /**
+ 247 |      * Print node status
+ 248 |      */
+ 249 |     public void printStatus() {
+ 250 |         System.out.println(nodeId + &quot; Status:&quot;);
+ 251 |         System.out.println(&quot;  Available: &quot; + isAvailable);
+ 252 |         System.out.println(&quot;  Last sequence: &quot; + lastAppliedSequence);
+ 253 |         System.out.println(&quot;  Shared resource: &quot; + sharedResource);
+ 254 |         System.out.println(&quot;  Data store: &quot; + dataStore);
+ 255 |         System.out.println(&quot;  Client versions: &quot; + clientVersions);
+ 256 |     }
+ 257 | 
+ 258 |     // Getters
+ 259 |     public String getNodeId() { return nodeId; }
+ 260 |     public int getLastSequence() { return lastAppliedSequence; }
+ 261 |     public boolean isAvailable() { return isAvailable; }
+ 262 |     public int getSharedResource() { return sharedResource; }
+ 263 |     public Map&lt;String, String&gt; getDataStore() { return new HashMap&lt;&gt;(dataStore); }
+ 264 | } 
+</pre>
+
+    <div class="file-header" id="SimulatorGUI_java">
+        <h2>SimulatorGUI.java</h2>
+        <div class="file-path">File: SimulatorGUI.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 862</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | import javax.swing.*;
+   4 | import javax.swing.border.TitledBorder;
+   5 | import javax.swing.table.DefaultTableModel;
+   6 | import java.awt.*;
+   7 | import java.awt.event.ActionEvent;
+   8 | import java.awt.event.ActionListener;
+   9 | import java.util.List;
+  10 | import java.util.concurrent.Executors;
+  11 | import java.util.concurrent.ScheduledExecutorService;
+  12 | import java.util.concurrent.TimeUnit;
+  13 | import java.io.*;
+  14 | import java.util.Properties;
+  15 | 
+  16 | /**
+  17 |  * Comprehensive GUI for the Distributed System Simulator
+  18 |  * Provides controls for simulation and performance analysis
+  19 |  */
+  20 | public class SimulatorGUI extends JFrame {
+  21 |     private DistributedSystemSimulator simulator;
+  22 |     private ScheduledExecutorService guiUpdateExecutor;
+  23 |     
+  24 |     // GUI Components
+  25 |     private JTextArea logArea;
+  26 |     private JTable performanceTable;
+  27 |     private DefaultTableModel performanceTableModel;
+  28 |     private JLabel statusLabel;
+  29 |     private JComboBox&lt;String&gt; nodeSelector;
+  30 |     private JComboBox&lt;String&gt; operationSelector;
+  31 |     private JTextField keyField;
+  32 |     private JTextField valueField;
+  33 |     private JComboBox&lt;String&gt; namingTypeSelector;
+  34 |     private JTextField lookupField;
+  35 |     private JButton startButton;
+  36 |     private JButton stopButton;
+  37 |     private JProgressBar systemLoadBar;
+  38 |     
+  39 |     // Performance tracking components
+  40 |     private JLabel totalOpsLabel;
+  41 |     private JLabel consistencyLabel;
+  42 |     private JLabel latencyLabel;
+  43 |     private JTextArea analysisArea;
+  44 | 
+  45 |     // New components for enhanced functionality
+  46 |     private JTextField domainField;
+  47 |     private JTextField ipField;
+  48 |     private JSpinner threadPoolSizeSpinner;
+  49 |     private JSpinner simulationIntervalSpinner;
+  50 |     private JTable dnsTable;
+  51 |     private DefaultTableModel dnsTableModel;
+  52 |     private JTextField configNameField;
+  53 | 
+  54 |     public SimulatorGUI() {
+  55 |         simulator = new DistributedSystemSimulator();
+  56 |         initializeGUI();
+  57 |         setupEventHandlers();
+  58 |         startGUIUpdates();
+  59 |     }
+  60 | 
+  61 |     private void initializeGUI() {
+  62 |         setTitle(&quot;Distributed System Simulator - Analysis Tool&quot;);
+  63 |         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+  64 |         setLayout(new BorderLayout());
+  65 |         
+  66 |         // Create main panels
+  67 |         createControlPanel();
+  68 |         createConfigurationPanel();
+  69 |         createMonitoringPanel();
+  70 |         createAnalysisPanel();
+  71 |         createLogPanel();
+  72 |         
+  73 |         // Set up the frame
+  74 |         pack();
+  75 |         setLocationRelativeTo(null);
+  76 |         setSize(1600, 1000);
+  77 |     }
+  78 | 
+  79 |     private void createControlPanel() {
+  80 |         JPanel controlPanel = new JPanel(new GridBagLayout());
+  81 |         controlPanel.setBorder(new TitledBorder(&quot;Simulation Controls&quot;));
+  82 |         GridBagConstraints gbc = new GridBagConstraints();
+  83 |         gbc.insets = new Insets(5, 5, 5, 5);
+  84 | 
+  85 |         // Simulation control buttons
+  86 |         gbc.gridx = 0; gbc.gridy = 0;
+  87 |         startButton = new JButton(&quot;Start Simulation&quot;);
+  88 |         startButton.setBackground(Color.GREEN);
+  89 |         controlPanel.add(startButton, gbc);
+  90 | 
+  91 |         gbc.gridx = 1;
+  92 |         stopButton = new JButton(&quot;Stop Simulation&quot;);
+  93 |         stopButton.setBackground(Color.RED);
+  94 |         stopButton.setEnabled(false);
+  95 |         controlPanel.add(stopButton, gbc);
+  96 | 
+  97 |         gbc.gridx = 2;
+  98 |         statusLabel = new JLabel(&quot;Status: Stopped&quot;);
+  99 |         statusLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+ 100 |         controlPanel.add(statusLabel, gbc);
+ 101 | 
+ 102 |         // Operation controls
+ 103 |         gbc.gridx = 0; gbc.gridy = 1;
+ 104 |         controlPanel.add(new JLabel(&quot;Node:&quot;), gbc);
+ 105 |         gbc.gridx = 1;
+ 106 |         nodeSelector = new JComboBox&lt;&gt;(new String[]{&quot;NodeA&quot;, &quot;NodeB&quot;, &quot;NodeC&quot;});
+ 107 |         controlPanel.add(nodeSelector, gbc);
+ 108 | 
+ 109 |         gbc.gridx = 0; gbc.gridy = 2;
+ 110 |         controlPanel.add(new JLabel(&quot;Operation:&quot;), gbc);
+ 111 |         gbc.gridx = 1;
+ 112 |         operationSelector = new JComboBox&lt;&gt;(new String[]{&quot;PUT&quot;, &quot;GET&quot;, &quot;DELETE&quot;, &quot;DEPOSIT&quot;, &quot;WITHDRAW&quot;});
+ 113 |         controlPanel.add(operationSelector, gbc);
+ 114 | 
+ 115 |         gbc.gridx = 0; gbc.gridy = 3;
+ 116 |         controlPanel.add(new JLabel(&quot;Key:&quot;), gbc);
+ 117 |         gbc.gridx = 1;
+ 118 |         keyField = new JTextField(10);
+ 119 |         controlPanel.add(keyField, gbc);
+ 120 | 
+ 121 |         gbc.gridx = 0; gbc.gridy = 4;
+ 122 |         controlPanel.add(new JLabel(&quot;Value:&quot;), gbc);
+ 123 |         gbc.gridx = 1;
+ 124 |         valueField = new JTextField(10);
+ 125 |         controlPanel.add(valueField, gbc);
+ 126 | 
+ 127 |         gbc.gridx = 2; gbc.gridy = 3;
+ 128 |         JButton executeButton = new JButton(&quot;Execute Operation&quot;);
+ 129 |         executeButton.addActionListener(e -&gt; executeOperation());
+ 130 |         controlPanel.add(executeButton, gbc);
+ 131 | 
+ 132 |         // Naming service controls
+ 133 |         gbc.gridx = 0; gbc.gridy = 5;
+ 134 |         controlPanel.add(new JLabel(&quot;Naming Type:&quot;), gbc);
+ 135 |         gbc.gridx = 1;
+ 136 |         namingTypeSelector = new JComboBox&lt;&gt;(new String[]{&quot;flat&quot;, &quot;structured&quot;, &quot;dns&quot;});
+ 137 |         controlPanel.add(namingTypeSelector, gbc);
+ 138 | 
+ 139 |         gbc.gridx = 0; gbc.gridy = 6;
+ 140 |         controlPanel.add(new JLabel(&quot;Lookup:&quot;), gbc);
+ 141 |         gbc.gridx = 1;
+ 142 |         lookupField = new JTextField(10);
+ 143 |         controlPanel.add(lookupField, gbc);
+ 144 | 
+ 145 |         gbc.gridx = 2; gbc.gridy = 6;
+ 146 |         JButton lookupButton = new JButton(&quot;Lookup Resource&quot;);
+ 147 |         lookupButton.addActionListener(e -&gt; performLookup());
+ 148 |         controlPanel.add(lookupButton, gbc);
+ 149 | 
+ 150 |         // Failure simulation controls
+ 151 |         gbc.gridx = 0; gbc.gridy = 7;
+ 152 |         JButton failButton = new JButton(&quot;Simulate Failure&quot;);
+ 153 |         failButton.addActionListener(e -&gt; simulateFailure());
+ 154 |         controlPanel.add(failButton, gbc);
+ 155 | 
+ 156 |         gbc.gridx = 1; gbc.gridy = 7;
+ 157 |         JButton recoverButton = new JButton(&quot;Recover Node&quot;);
+ 158 |         recoverButton.addActionListener(e -&gt; recoverNode());
+ 159 |         controlPanel.add(recoverButton, gbc);
+ 160 | 
+ 161 |         add(controlPanel, BorderLayout.NORTH);
+ 162 |     }
+ 163 | 
+ 164 |     private void createConfigurationPanel() {
+ 165 |         JTabbedPane configTabs = new JTabbedPane();
+ 166 |         
+ 167 |         // DNS Configuration Tab
+ 168 |         JPanel dnsPanel = createDNSConfigPanel();
+ 169 |         configTabs.addTab(&quot;DNS Management&quot;, dnsPanel);
+ 170 |         
+ 171 |         // Threading Configuration Tab
+ 172 |         JPanel threadPanel = createThreadConfigPanel();
+ 173 |         configTabs.addTab(&quot;Thread Config&quot;, threadPanel);
+ 174 |         
+ 175 |         // Save/Load Configuration Tab
+ 176 |         JPanel saveLoadPanel = createSaveLoadPanel();
+ 177 |         configTabs.addTab(&quot;Save/Load Config&quot;, saveLoadPanel);
+ 178 |         
+ 179 |         configTabs.setBorder(new TitledBorder(&quot;Configuration&quot;));
+ 180 |         add(configTabs, BorderLayout.CENTER);
+ 181 |     }
+ 182 | 
+ 183 |     private JPanel createDNSConfigPanel() {
+ 184 |         JPanel dnsPanel = new JPanel(new BorderLayout());
+ 185 |         
+ 186 |         // DNS Entry Controls
+ 187 |         JPanel dnsControlPanel = new JPanel(new GridBagLayout());
+ 188 |         GridBagConstraints gbc = new GridBagConstraints();
+ 189 |         gbc.insets = new Insets(5, 5, 5, 5);
+ 190 | 
+ 191 |         gbc.gridx = 0; gbc.gridy = 0;
+ 192 |         dnsControlPanel.add(new JLabel(&quot;Domain:&quot;), gbc);
+ 193 |         gbc.gridx = 1;
+ 194 |         domainField = new JTextField(15);
+ 195 |         dnsControlPanel.add(domainField, gbc);
+ 196 | 
+ 197 |         gbc.gridx = 0; gbc.gridy = 1;
+ 198 |         dnsControlPanel.add(new JLabel(&quot;IP Address:&quot;), gbc);
+ 199 |         gbc.gridx = 1;
+ 200 |         ipField = new JTextField(15);
+ 201 |         dnsControlPanel.add(ipField, gbc);
+ 202 | 
+ 203 |         gbc.gridx = 2; gbc.gridy = 0;
+ 204 |         JButton addDnsButton = new JButton(&quot;Add DNS Entry&quot;);
+ 205 |         addDnsButton.addActionListener(e -&gt; addDNSEntry());
+ 206 |         dnsControlPanel.add(addDnsButton, gbc);
+ 207 | 
+ 208 |         gbc.gridx = 2; gbc.gridy = 1;
+ 209 |         JButton removeDnsButton = new JButton(&quot;Remove Selected&quot;);
+ 210 |         removeDnsButton.addActionListener(e -&gt; removeDNSEntry());
+ 211 |         dnsControlPanel.add(removeDnsButton, gbc);
+ 212 | 
+ 213 |         gbc.gridx = 3; gbc.gridy = 0;
+ 214 |         JButton clearDnsButton = new JButton(&quot;Clear All&quot;);
+ 215 |         clearDnsButton.addActionListener(e -&gt; clearDNSEntries());
+ 216 |         dnsControlPanel.add(clearDnsButton, gbc);
+ 217 | 
+ 218 |         gbc.gridx = 3; gbc.gridy = 1;
+ 219 |         JButton refreshDnsButton = new JButton(&quot;Refresh Table&quot;);
+ 220 |         refreshDnsButton.addActionListener(e -&gt; refreshDNSTable());
+ 221 |         dnsControlPanel.add(refreshDnsButton, gbc);
+ 222 | 
+ 223 |         // DNS Table
+ 224 |         String[] dnsColumns = {&quot;Domain&quot;, &quot;IP Address&quot;};
+ 225 |         dnsTableModel = new DefaultTableModel(dnsColumns, 0);
+ 226 |         dnsTable = new JTable(dnsTableModel);
+ 227 |         JScrollPane dnsScrollPane = new JScrollPane(dnsTable);
+ 228 |         dnsScrollPane.setPreferredSize(new Dimension(500, 200));
+ 229 | 
+ 230 |         dnsPanel.add(dnsControlPanel, BorderLayout.NORTH);
+ 231 |         dnsPanel.add(dnsScrollPane, BorderLayout.CENTER);
+ 232 |         
+ 233 |         // Load initial DNS entries
+ 234 |         refreshDNSTable();
+ 235 |         
+ 236 |         return dnsPanel;
+ 237 |     }
+ 238 | 
+ 239 |     private JPanel createThreadConfigPanel() {
+ 240 |         JPanel threadPanel = new JPanel(new GridBagLayout());
+ 241 |         GridBagConstraints gbc = new GridBagConstraints();
+ 242 |         gbc.insets = new Insets(10, 10, 10, 10);
+ 243 | 
+ 244 |         gbc.gridx = 0; gbc.gridy = 0;
+ 245 |         threadPanel.add(new JLabel(&quot;Thread Pool Size:&quot;), gbc);
+ 246 |         gbc.gridx = 1;
+ 247 |         threadPoolSizeSpinner = new JSpinner(new SpinnerNumberModel(5, 1, 50, 1));
+ 248 |         threadPanel.add(threadPoolSizeSpinner, gbc);
+ 249 | 
+ 250 |         gbc.gridx = 0; gbc.gridy = 1;
+ 251 |         threadPanel.add(new JLabel(&quot;Simulation Interval (ms):&quot;), gbc);
+ 252 |         gbc.gridx = 1;
+ 253 |         simulationIntervalSpinner = new JSpinner(new SpinnerNumberModel(1000, 100, 10000, 100));
+ 254 |         threadPanel.add(simulationIntervalSpinner, gbc);
+ 255 | 
+ 256 |         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+ 257 |         JButton applyThreadConfigButton = new JButton(&quot;Apply Thread Configuration&quot;);
+ 258 |         applyThreadConfigButton.addActionListener(e -&gt; applyThreadConfiguration());
+ 259 |         threadPanel.add(applyThreadConfigButton, gbc);
+ 260 | 
+ 261 |         gbc.gridy = 3;
+ 262 |         JTextArea threadInfoArea = new JTextArea(8, 40);
+ 263 |         threadInfoArea.setEditable(false);
+ 264 |         threadInfoArea.setText(&quot;Thread Configuration Info:\n\n&quot; +
+ 265 |                 &quot;• Thread Pool Size: Controls the number of concurrent threads\n&quot; +
+ 266 |                 &quot;• Simulation Interval: Time between automated operations\n&quot; +
+ 267 |                 &quot;• Lower intervals = higher system load\n&quot; +
+ 268 |                 &quot;• Higher thread count = better parallelism but more overhead\n&quot; +
+ 269 |                 &quot;• Recommended: 3-10 threads, 500-2000ms interval&quot;);
+ 270 |         JScrollPane threadInfoScrollPane = new JScrollPane(threadInfoArea);
+ 271 |         threadPanel.add(threadInfoScrollPane, gbc);
+ 272 | 
+ 273 |         return threadPanel;
+ 274 |     }
+ 275 | 
+ 276 |     private JPanel createSaveLoadPanel() {
+ 277 |         JPanel saveLoadPanel = new JPanel(new GridBagLayout());
+ 278 |         GridBagConstraints gbc = new GridBagConstraints();
+ 279 |         gbc.insets = new Insets(10, 10, 10, 10);
+ 280 | 
+ 281 |         gbc.gridx = 0; gbc.gridy = 0;
+ 282 |         saveLoadPanel.add(new JLabel(&quot;Config Name:&quot;), gbc);
+ 283 |         gbc.gridx = 1;
+ 284 |         configNameField = new JTextField(20);
+ 285 |         saveLoadPanel.add(configNameField, gbc);
+ 286 | 
+ 287 |         gbc.gridx = 0; gbc.gridy = 1;
+ 288 |         JButton saveConfigButton = new JButton(&quot;Save Configuration&quot;);
+ 289 |         saveConfigButton.addActionListener(e -&gt; saveConfiguration());
+ 290 |         saveLoadPanel.add(saveConfigButton, gbc);
+ 291 | 
+ 292 |         gbc.gridx = 1;
+ 293 |         JButton loadConfigButton = new JButton(&quot;Load Configuration&quot;);
+ 294 |         loadConfigButton.addActionListener(e -&gt; loadConfiguration());
+ 295 |         saveLoadPanel.add(loadConfigButton, gbc);
+ 296 | 
+ 297 |         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+ 298 |         JButton loadDefaultButton = new JButton(&quot;Load Default Configuration&quot;);
+ 299 |         loadDefaultButton.addActionListener(e -&gt; loadDefaultConfiguration());
+ 300 |         saveLoadPanel.add(loadDefaultButton, gbc);
+ 301 | 
+ 302 |         gbc.gridy = 3;
+ 303 |         JTextArea configInfoArea = new JTextArea(10, 40);
+ 304 |         configInfoArea.setEditable(false);
+ 305 |         configInfoArea.setText(&quot;Configuration Management:\n\n&quot; +
+ 306 |                 &quot;• Save: Saves current DNS entries, thread settings, and node configurations\n&quot; +
+ 307 |                 &quot;• Load: Restores a previously saved configuration\n&quot; +
+ 308 |                 &quot;• Default: Loads pre-configured setup with sample data\n\n&quot; +
+ 309 |                 &quot;Configurations are saved as .properties files in the configs/ directory\n&quot; +
+ 310 |                 &quot;Include DNS entries, thread pool settings, and simulation parameters&quot;);
+ 311 |         JScrollPane configInfoScrollPane = new JScrollPane(configInfoArea);
+ 312 |         saveLoadPanel.add(configInfoScrollPane, gbc);
+ 313 | 
+ 314 |         return saveLoadPanel;
+ 315 |     }
+ 316 | 
+ 317 |     private void createMonitoringPanel() {
+ 318 |         JPanel monitoringPanel = new JPanel(new BorderLayout());
+ 319 |         monitoringPanel.setBorder(new TitledBorder(&quot;Real-time Monitoring&quot;));
+ 320 | 
+ 321 |         // Performance metrics
+ 322 |         JPanel metricsPanel = new JPanel(new GridLayout(2, 3, 10, 10));
+ 323 |         metricsPanel.setBorder(new TitledBorder(&quot;Performance Metrics&quot;));
+ 324 | 
+ 325 |         totalOpsLabel = new JLabel(&quot;Total Operations: 0&quot;);
+ 326 |         consistencyLabel = new JLabel(&quot;Consistency Violations: 0%&quot;);
+ 327 |         latencyLabel = new JLabel(&quot;Avg Latency: 0ms&quot;);
+ 328 |         systemLoadBar = new JProgressBar(0, 100);
+ 329 |         systemLoadBar.setStringPainted(true);
+ 330 |         systemLoadBar.setString(&quot;System Load&quot;);
+ 331 | 
+ 332 |         metricsPanel.add(totalOpsLabel);
+ 333 |         metricsPanel.add(consistencyLabel);
+ 334 |         metricsPanel.add(latencyLabel);
+ 335 |         metricsPanel.add(systemLoadBar);
+ 336 |         metricsPanel.add(new JLabel(&quot;&quot;));
+ 337 |         metricsPanel.add(new JLabel(&quot;&quot;));
+ 338 | 
+ 339 |         // Performance table
+ 340 |         String[] columnNames = {&quot;Timestamp&quot;, &quot;Operations&quot;, &quot;Violations %&quot;, &quot;Latency (ms)&quot;};
+ 341 |         performanceTableModel = new DefaultTableModel(columnNames, 0);
+ 342 |         performanceTable = new JTable(performanceTableModel);
+ 343 |         performanceTable.setPreferredScrollableViewportSize(new Dimension(500, 150));
+ 344 |         JScrollPane tableScrollPane = new JScrollPane(performanceTable);
+ 345 |         tableScrollPane.setBorder(new TitledBorder(&quot;Performance History&quot;));
+ 346 | 
+ 347 |         monitoringPanel.add(metricsPanel, BorderLayout.NORTH);
+ 348 |         monitoringPanel.add(tableScrollPane, BorderLayout.CENTER);
+ 349 | 
+ 350 |         add(monitoringPanel, BorderLayout.WEST);
+ 351 |     }
+ 352 | 
+ 353 |     private void createAnalysisPanel() {
+ 354 |         JPanel analysisPanel = new JPanel(new BorderLayout());
+ 355 |         analysisPanel.setBorder(new TitledBorder(&quot;Trade-off Analysis&quot;));
+ 356 | 
+ 357 |         analysisArea = new JTextArea(15, 40);
+ 358 |         analysisArea.setEditable(false);
+ 359 |         analysisArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+ 360 |         JScrollPane analysisScrollPane = new JScrollPane(analysisArea);
+ 361 | 
+ 362 |         JPanel analysisButtonPanel = new JPanel(new FlowLayout());
+ 363 |         JButton analyzeButton = new JButton(&quot;Analyze Performance&quot;);
+ 364 |         analyzeButton.addActionListener(e -&gt; performAnalysis());
+ 365 |         
+ 366 |         JButton compareButton = new JButton(&quot;Compare Naming&quot;);
+ 367 |         compareButton.addActionListener(e -&gt; compareNamingServices());
+ 368 |         
+ 369 |         JButton consistencyButton = new JButton(&quot;Analyze Consistency&quot;);
+ 370 |         consistencyButton.addActionListener(e -&gt; analyzeConsistencyModels());
+ 371 | 
+ 372 |         analysisButtonPanel.add(analyzeButton);
+ 373 |         analysisButtonPanel.add(compareButton);
+ 374 |         analysisButtonPanel.add(consistencyButton);
+ 375 | 
+ 376 |         analysisPanel.add(analysisButtonPanel, BorderLayout.NORTH);
+ 377 |         analysisPanel.add(analysisScrollPane, BorderLayout.CENTER);
+ 378 | 
+ 379 |         add(analysisPanel, BorderLayout.EAST);
+ 380 |     }
+ 381 | 
+ 382 |     private void createLogPanel() {
+ 383 |         JPanel logPanel = new JPanel(new BorderLayout());
+ 384 |         logPanel.setBorder(new TitledBorder(&quot;System Logs&quot;));
+ 385 | 
+ 386 |         logArea = new JTextArea(10, 80);
+ 387 |         logArea.setEditable(false);
+ 388 |         logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+ 389 |         JScrollPane logScrollPane = new JScrollPane(logArea);
+ 390 | 
+ 391 |         JPanel logButtonPanel = new JPanel(new FlowLayout());
+ 392 |         JButton clearLogsButton = new JButton(&quot;Clear Logs&quot;);
+ 393 |         clearLogsButton.addActionListener(e -&gt; logArea.setText(&quot;&quot;));
+ 394 |         
+ 395 |         JButton statusButton = new JButton(&quot;Show System Status&quot;);
+ 396 |         statusButton.addActionListener(e -&gt; showSystemStatus());
+ 397 | 
+ 398 |         logButtonPanel.add(clearLogsButton);
+ 399 |         logButtonPanel.add(statusButton);
+ 400 | 
+ 401 |         logPanel.add(logButtonPanel, BorderLayout.NORTH);
+ 402 |         logPanel.add(logScrollPane, BorderLayout.CENTER);
+ 403 | 
+ 404 |         add(logPanel, BorderLayout.SOUTH);
+ 405 |     }
+ 406 | 
+ 407 |     private void setupEventHandlers() {
+ 408 |         startButton.addActionListener(e -&gt; startSimulation());
+ 409 |         stopButton.addActionListener(e -&gt; stopSimulation());
+ 410 |     }
+ 411 | 
+ 412 |     private void startGUIUpdates() {
+ 413 |         guiUpdateExecutor = Executors.newScheduledThreadPool(1);
+ 414 |         guiUpdateExecutor.scheduleAtFixedRate(this::updateGUI, 0, 1, TimeUnit.SECONDS);
+ 415 |     }
+ 416 | 
+ 417 |     private void updateGUI() {
+ 418 |         SwingUtilities.invokeLater(() -&gt; {
+ 419 |             List&lt;PerformanceMetric&gt; metrics = simulator.getMetrics();
+ 420 |             if (!metrics.isEmpty()) {
+ 421 |                 PerformanceMetric latest = metrics.get(metrics.size() - 1);
+ 422 |                 totalOpsLabel.setText(&quot;Total Operations: &quot; + latest.getTotalOperations());
+ 423 |                 consistencyLabel.setText(String.format(&quot;Consistency Violations: %.1f%%&quot;, 
+ 424 |                                                      latest.getConsistencyViolations() * 100));
+ 425 |                 latencyLabel.setText(String.format(&quot;Avg Latency: %.1fms&quot;, latest.getAverageLatency()));
+ 426 |                 
+ 427 |                 int load = Math.min(100, latest.getTotalOperations() % 100);
+ 428 |                 systemLoadBar.setValue(load);
+ 429 |                 
+ 430 |                 if (performanceTableModel.getRowCount() &gt; 20) {
+ 431 |                     performanceTableModel.removeRow(0);
+ 432 |                 }
+ 433 |                 
+ 434 |                 Object[] row = {
+ 435 |                     new java.util.Date(latest.getTimestamp()),
+ 436 |                     latest.getTotalOperations(),
+ 437 |                     String.format(&quot;%.2f&quot;, latest.getConsistencyViolations() * 100),
+ 438 |                     String.format(&quot;%.1f&quot;, latest.getAverageLatency())
+ 439 |                 };
+ 440 |                 performanceTableModel.addRow(row);
+ 441 |             }
+ 442 |             
+ 443 |             statusLabel.setText(&quot;Status: &quot; + (simulator.isRunning() ? &quot;Running&quot; : &quot;Stopped&quot;));
+ 444 |         });
+ 445 |     }
+ 446 | 
+ 447 |     private void startSimulation() {
+ 448 |         simulator.startSimulation();
+ 449 |         startButton.setEnabled(false);
+ 450 |         stopButton.setEnabled(true);
+ 451 |         logArea.append(&quot;Simulation started...\n&quot;);
+ 452 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 453 |     }
+ 454 | 
+ 455 |     private void stopSimulation() {
+ 456 |         simulator.stopSimulation();
+ 457 |         startButton.setEnabled(true);
+ 458 |         stopButton.setEnabled(false);
+ 459 |         logArea.append(&quot;Simulation stopped.\n&quot;);
+ 460 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 461 |     }
+ 462 | 
+ 463 |     private void executeOperation() {
+ 464 |         String node = (String) nodeSelector.getSelectedItem();
+ 465 |         String operation = (String) operationSelector.getSelectedItem();
+ 466 |         String key = keyField.getText().trim();
+ 467 |         String value = valueField.getText().trim();
+ 468 |         
+ 469 |         if (key.isEmpty() &amp;&amp; !operation.equals(&quot;DEPOSIT&quot;) &amp;&amp; !operation.equals(&quot;WITHDRAW&quot;)) {
+ 470 |             key = &quot;defaultKey&quot;;
+ 471 |         }
+ 472 |         if (value.isEmpty()) {
+ 473 |             value = &quot;defaultValue&quot;;
+ 474 |         }
+ 475 |         
+ 476 |         simulator.performOperation(node, operation, key, value);
+ 477 |         logArea.append(String.format(&quot;Executed %s on %s (key: %s, value: %s)\n&quot;, 
+ 478 |                                    operation, node, key, value));
+ 479 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 480 |     }
+ 481 | 
+ 482 |     private void performLookup() {
+ 483 |         String namingType = (String) namingTypeSelector.getSelectedItem();
+ 484 |         String resourceName = lookupField.getText().trim();
+ 485 |         
+ 486 |         if (resourceName.isEmpty()) {
+ 487 |             JOptionPane.showMessageDialog(this, &quot;Please enter a resource name to lookup.&quot;);
+ 488 |             return;
+ 489 |         }
+ 490 |         
+ 491 |         String result = simulator.lookupResource(resourceName, namingType);
+ 492 |         logArea.append(String.format(&quot;Lookup (%s): %s -&gt; %s\n&quot;, namingType, resourceName, result));
+ 493 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 494 |     }
+ 495 | 
+ 496 |     private void simulateFailure() {
+ 497 |         String node = (String) nodeSelector.getSelectedItem();
+ 498 |         simulator.simulateNodeFailure(node);
+ 499 |         logArea.append(&quot;Simulated failure for &quot; + node + &quot;\n&quot;);
+ 500 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 501 |     }
+ 502 | 
+ 503 |     private void recoverNode() {
+ 504 |         String node = (String) nodeSelector.getSelectedItem();
+ 505 |         simulator.recoverNode(node);
+ 506 |         logArea.append(&quot;Recovered &quot; + node + &quot;\n&quot;);
+ 507 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 508 |     }
+ 509 | 
+ 510 |     private void showSystemStatus() {
+ 511 |         logArea.append(&quot;\n=== SYSTEM STATUS ===\n&quot;);
+ 512 |         simulator.printSystemStatus();
+ 513 |         logArea.append(&quot;Status printed to console.\n&quot;);
+ 514 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 515 |     }
+ 516 | 
+ 517 |     private void performAnalysis() {
+ 518 |         StringBuilder analysis = new StringBuilder();
+ 519 |         analysis.append(&quot;=== SYSTEM PERFORMANCE ANALYSIS ===\n\n&quot;);
+ 520 |         
+ 521 |         List&lt;PerformanceMetric&gt; metrics = simulator.getMetrics();
+ 522 |         if (metrics.isEmpty()) {
+ 523 |             analysis.append(&quot;No performance data available yet.\nStart the simulation to collect metrics.\n&quot;);
+ 524 |         } else {
+ 525 |             PerformanceMetric latest = metrics.get(metrics.size() - 1);
+ 526 |             
+ 527 |             analysis.append(&quot;Current Performance:\n&quot;);
+ 528 |             analysis.append(String.format(&quot;- Total Operations: %d\n&quot;, latest.getTotalOperations()));
+ 529 |             analysis.append(String.format(&quot;- Consistency Violations: %.2f%%\n&quot;, 
+ 530 |                                          latest.getConsistencyViolations() * 100));
+ 531 |             analysis.append(String.format(&quot;- Average Latency: %.2f ms\n\n&quot;, latest.getAverageLatency()));
+ 532 |             
+ 533 |             if (metrics.size() &gt; 5) {
+ 534 |                 analysis.append(&quot;Performance Trends:\n&quot;);
+ 535 |                 double avgViolations = metrics.stream()
+ 536 |                     .mapToDouble(PerformanceMetric::getConsistencyViolations)
+ 537 |                     .average().orElse(0.0);
+ 538 |                 double avgLatency = metrics.stream()
+ 539 |                     .mapToDouble(PerformanceMetric::getAverageLatency)
+ 540 |                     .average().orElse(0.0);
+ 541 |                 
+ 542 |                 analysis.append(String.format(&quot;- Avg Consistency Violations: %.2f%%\n&quot;, avgViolations * 100));
+ 543 |                 analysis.append(String.format(&quot;- Avg System Latency: %.2f ms\n&quot;, avgLatency));
+ 544 |                 
+ 545 |                 if (avgViolations &gt; 0.05) {
+ 546 |                     analysis.append(&quot;Warning: High consistency violations!\n&quot;);
+ 547 |                 }
+ 548 |                 if (avgLatency &gt; 200) {
+ 549 |                     analysis.append(&quot;Warning: High latency detected!\n&quot;);
+ 550 |                 }
+ 551 |             }
+ 552 |         }
+ 553 |         
+ 554 |         analysisArea.setText(analysis.toString());
+ 555 |     }
+ 556 | 
+ 557 |     private void compareNamingServices() {
+ 558 |         StringBuilder comparison = new StringBuilder();
+ 559 |         comparison.append(&quot;=== NAMING SERVICES COMPARISON ===\n\n&quot;);
+ 560 |         
+ 561 |         comparison.append(&quot;1. FLAT NAMING:\n&quot;);
+ 562 |         comparison.append(&quot;   + Simple O(1) lookup time\n&quot;);
+ 563 |         comparison.append(&quot;   + Fast registration\n&quot;);
+ 564 |         comparison.append(&quot;   - No organization\n&quot;);
+ 565 |         comparison.append(&quot;   - Name collision issues\n\n&quot;);
+ 566 |         
+ 567 |         comparison.append(&quot;2. STRUCTURED NAMING:\n&quot;);
+ 568 |         comparison.append(&quot;   + Hierarchical organization\n&quot;);
+ 569 |         comparison.append(&quot;   + Better name management\n&quot;);
+ 570 |         comparison.append(&quot;   - Slightly higher overhead\n&quot;);
+ 571 |         comparison.append(&quot;   - Path format required\n\n&quot;);
+ 572 |         
+ 573 |         comparison.append(&quot;3. DNS SIMULATION:\n&quot;);
+ 574 |         comparison.append(&quot;   + Industry standard\n&quot;);
+ 575 |         comparison.append(&quot;   + Distributed capability\n&quot;);
+ 576 |         comparison.append(&quot;   - Network dependency\n&quot;);
+ 577 |         comparison.append(&quot;   - Potential cache issues\n\n&quot;);
+ 578 |         
+ 579 |         comparison.append(&quot;RECOMMENDATIONS:\n&quot;);
+ 580 |         comparison.append(&quot;- Flat: Simple local services\n&quot;);
+ 581 |         comparison.append(&quot;- Structured: Organized systems\n&quot;);
+ 582 |         comparison.append(&quot;- DNS: Internet-scale apps\n&quot;);
+ 583 |         
+ 584 |         analysisArea.setText(comparison.toString());
+ 585 |     }
+ 586 | 
+ 587 |     private void analyzeConsistencyModels() {
+ 588 |         StringBuilder analysis = new StringBuilder();
+ 589 |         analysis.append(&quot;=== CONSISTENCY MODELS ANALYSIS ===\n\n&quot;);
+ 590 |         
+ 591 |         analysis.append(&quot;1. SEQUENTIAL CONSISTENCY:\n&quot;);
+ 592 |         analysis.append(&quot;   - All nodes see same order\n&quot;);
+ 593 |         analysis.append(&quot;   - Strong guarantees\n&quot;);
+ 594 |         analysis.append(&quot;   - Higher latency\n&quot;);
+ 595 |         analysis.append(&quot;   - Best for: Financial systems\n\n&quot;);
+ 596 |         
+ 597 |         analysis.append(&quot;2. EVENTUAL CONSISTENCY:\n&quot;);
+ 598 |         analysis.append(&quot;   - Temporary divergence allowed\n&quot;);
+ 599 |         analysis.append(&quot;   - Lower latency\n&quot;);
+ 600 |         analysis.append(&quot;   - Higher availability\n&quot;);
+ 601 |         analysis.append(&quot;   - Best for: Social media\n\n&quot;);
+ 602 |         
+ 603 |         analysis.append(&quot;3. CLIENT-CENTRIC:\n&quot;);
+ 604 |         analysis.append(&quot;   - Per-client consistency\n&quot;);
+ 605 |         analysis.append(&quot;   - Read-your-writes guarantee\n&quot;);
+ 606 |         analysis.append(&quot;   - Good balance\n&quot;);
+ 607 |         analysis.append(&quot;   - Best for: User sessions\n\n&quot;);
+ 608 |         
+ 609 |         analysis.append(&quot;TRADE-OFFS:\n&quot;);
+ 610 |         analysis.append(&quot;Strong Consistency &lt;-&gt; Availability\n&quot;);
+ 611 |         analysis.append(&quot;Low Latency &lt;-&gt; Consistency\n&quot;);
+ 612 |         analysis.append(&quot;Partition Tolerance &lt;-&gt; Consistency\n\n&quot;);
+ 613 |         
+ 614 |         List&lt;PerformanceMetric&gt; metrics = simulator.getMetrics();
+ 615 |         if (!metrics.isEmpty()) {
+ 616 |             PerformanceMetric latest = metrics.get(metrics.size() - 1);
+ 617 |             analysis.append(&quot;CURRENT STATUS:\n&quot;);
+ 618 |             if (latest.getConsistencyViolations() &lt; 0.01) {
+ 619 |                 analysis.append(&quot;Strong consistency maintained\n&quot;);
+ 620 |             } else if (latest.getConsistencyViolations() &lt; 0.05) {
+ 621 |                 analysis.append(&quot;Moderate consistency violations\n&quot;);
+ 622 |             } else {
+ 623 |                 analysis.append(&quot;High consistency violations\n&quot;);
+ 624 |             }
+ 625 |         }
+ 626 |         
+ 627 |         analysisArea.setText(analysis.toString());
+ 628 |     }
+ 629 | 
+ 630 |     // DNS Management Methods
+ 631 |     private void addDNSEntry() {
+ 632 |         String domain = domainField.getText().trim();
+ 633 |         String ip = ipField.getText().trim();
+ 634 |         
+ 635 |         if (domain.isEmpty() || ip.isEmpty()) {
+ 636 |             JOptionPane.showMessageDialog(this, &quot;Please enter both domain and IP address.&quot;);
+ 637 |             return;
+ 638 |         }
+ 639 |         
+ 640 |         // Validate IP format (basic validation)
+ 641 |         if (!ip.matches(&quot;\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}&quot;)) {
+ 642 |             JOptionPane.showMessageDialog(this, &quot;Please enter a valid IP address format (e.g., 192.168.1.1).&quot;);
+ 643 |             return;
+ 644 |         }
+ 645 |         
+ 646 |         simulator.addDNSEntry(domain, ip);
+ 647 |         refreshDNSTable();
+ 648 |         domainField.setText(&quot;&quot;);
+ 649 |         ipField.setText(&quot;&quot;);
+ 650 |         logArea.append(&quot;Added DNS entry: &quot; + domain + &quot; -&gt; &quot; + ip + &quot;\n&quot;);
+ 651 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 652 |     }
+ 653 | 
+ 654 |     private void removeDNSEntry() {
+ 655 |         int selectedRow = dnsTable.getSelectedRow();
+ 656 |         if (selectedRow == -1) {
+ 657 |             JOptionPane.showMessageDialog(this, &quot;Please select a DNS entry to remove.&quot;);
+ 658 |             return;
+ 659 |         }
+ 660 |         
+ 661 |         String domain = (String) dnsTableModel.getValueAt(selectedRow, 0);
+ 662 |         simulator.removeDNSEntry(domain);
+ 663 |         refreshDNSTable();
+ 664 |         logArea.append(&quot;Removed DNS entry: &quot; + domain + &quot;\n&quot;);
+ 665 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 666 |     }
+ 667 | 
+ 668 |     private void clearDNSEntries() {
+ 669 |         int confirm = JOptionPane.showConfirmDialog(this, 
+ 670 |             &quot;Are you sure you want to clear all DNS entries? This will reset to defaults.&quot;,
+ 671 |             &quot;Confirm Clear&quot;, JOptionPane.YES_NO_OPTION);
+ 672 |         
+ 673 |         if (confirm == JOptionPane.YES_OPTION) {
+ 674 |             simulator.clearDNSEntries();
+ 675 |             refreshDNSTable();
+ 676 |             logArea.append(&quot;Cleared all DNS entries and reset to defaults.\n&quot;);
+ 677 |             logArea.setCaretPosition(logArea.getDocument().getLength());
+ 678 |         }
+ 679 |     }
+ 680 | 
+ 681 |     private void refreshDNSTable() {
+ 682 |         // Clear existing rows
+ 683 |         dnsTableModel.setRowCount(0);
+ 684 |         
+ 685 |         // Get current DNS entries from simulator
+ 686 |         java.util.Set&lt;String&gt; domains = simulator.getAllDNSDomains();
+ 687 |         for (String domain : domains) {
+ 688 |             String ip = simulator.lookupDNSEntry(domain);
+ 689 |             if (ip != null) {
+ 690 |                 dnsTableModel.addRow(new Object[]{domain, ip});
+ 691 |             }
+ 692 |         }
+ 693 |     }
+ 694 | 
+ 695 |     // Thread Configuration Methods
+ 696 |     private void applyThreadConfiguration() {
+ 697 |         int threadPoolSize = (Integer) threadPoolSizeSpinner.getValue();
+ 698 |         int simulationInterval = (Integer) simulationIntervalSpinner.getValue();
+ 699 |         
+ 700 |         simulator.configureThreads(threadPoolSize, simulationInterval);
+ 701 |         logArea.append(String.format(&quot;Applied thread configuration: Pool size=%d, Interval=%dms\n&quot;, 
+ 702 |                                     threadPoolSize, simulationInterval));
+ 703 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 704 |         
+ 705 |         JOptionPane.showMessageDialog(this, 
+ 706 |             &quot;Thread configuration applied successfully!\nRestart simulation for changes to take effect.&quot;,
+ 707 |             &quot;Configuration Applied&quot;, JOptionPane.INFORMATION_MESSAGE);
+ 708 |     }
+ 709 | 
+ 710 |     // Configuration Save/Load Methods
+ 711 |     private void saveConfiguration() {
+ 712 |         String configName = configNameField.getText().trim();
+ 713 |         if (configName.isEmpty()) {
+ 714 |             JOptionPane.showMessageDialog(this, &quot;Please enter a configuration name.&quot;);
+ 715 |             return;
+ 716 |         }
+ 717 |         
+ 718 |         try {
+ 719 |             // Create configs directory if it doesn&#x27;t exist
+ 720 |             File configDir = new File(&quot;configs&quot;);
+ 721 |             if (!configDir.exists()) {
+ 722 |                 configDir.mkdirs();
+ 723 |             }
+ 724 |             
+ 725 |             Properties config = new Properties();
+ 726 |             
+ 727 |             // Save thread configuration
+ 728 |             config.setProperty(&quot;thread.pool.size&quot;, threadPoolSizeSpinner.getValue().toString());
+ 729 |             config.setProperty(&quot;simulation.interval&quot;, simulationIntervalSpinner.getValue().toString());
+ 730 |             
+ 731 |             // Save DNS entries
+ 732 |             java.util.Set&lt;String&gt; domains = simulator.getAllDNSDomains();
+ 733 |             config.setProperty(&quot;dns.count&quot;, String.valueOf(domains.size()));
+ 734 |             int i = 0;
+ 735 |             for (String domain : domains) {
+ 736 |                 String ip = simulator.lookupDNSEntry(domain);
+ 737 |                 if (ip != null) {
+ 738 |                     config.setProperty(&quot;dns.&quot; + i + &quot;.domain&quot;, domain);
+ 739 |                     config.setProperty(&quot;dns.&quot; + i + &quot;.ip&quot;, ip);
+ 740 |                     i++;
+ 741 |                 }
+ 742 |             }
+ 743 |             
+ 744 |             // Save node configuration
+ 745 |             config.setProperty(&quot;nodes&quot;, String.join(&quot;,&quot;, simulator.getNodeIds()));
+ 746 |             
+ 747 |             // Save current simulation state
+ 748 |             config.setProperty(&quot;simulation.running&quot;, String.valueOf(simulator.isRunning()));
+ 749 |             
+ 750 |             File configFile = new File(configDir, configName + &quot;.properties&quot;);
+ 751 |             try (FileOutputStream fos = new FileOutputStream(configFile)) {
+ 752 |                 config.store(fos, &quot;Distributed System Simulator Configuration - &quot; + configName);
+ 753 |             }
+ 754 |             
+ 755 |             logArea.append(&quot;Configuration saved: &quot; + configFile.getAbsolutePath() + &quot;\n&quot;);
+ 756 |             logArea.setCaretPosition(logArea.getDocument().getLength());
+ 757 |             
+ 758 |             JOptionPane.showMessageDialog(this, &quot;Configuration saved successfully!&quot;, 
+ 759 |                                         &quot;Save Successful&quot;, JOptionPane.INFORMATION_MESSAGE);
+ 760 |             
+ 761 |         } catch (IOException e) {
+ 762 |             JOptionPane.showMessageDialog(this, &quot;Error saving configuration: &quot; + e.getMessage(), 
+ 763 |                                         &quot;Save Error&quot;, JOptionPane.ERROR_MESSAGE);
+ 764 |         }
+ 765 |     }
+ 766 | 
+ 767 |     private void loadConfiguration() {
+ 768 |         String configName = configNameField.getText().trim();
+ 769 |         if (configName.isEmpty()) {
+ 770 |             JOptionPane.showMessageDialog(this, &quot;Please enter a configuration name.&quot;);
+ 771 |             return;
+ 772 |         }
+ 773 |         
+ 774 |         try {
+ 775 |             File configFile = new File(&quot;configs&quot;, configName + &quot;.properties&quot;);
+ 776 |             if (!configFile.exists()) {
+ 777 |                 JOptionPane.showMessageDialog(this, &quot;Configuration file not found: &quot; + configName, 
+ 778 |                                             &quot;File Not Found&quot;, JOptionPane.ERROR_MESSAGE);
+ 779 |                 return;
+ 780 |             }
+ 781 |             
+ 782 |             Properties config = new Properties();
+ 783 |             try (FileInputStream fis = new FileInputStream(configFile)) {
+ 784 |                 config.load(fis);
+ 785 |             }
+ 786 |             
+ 787 |             // Load thread configuration
+ 788 |             if (config.containsKey(&quot;thread.pool.size&quot;)) {
+ 789 |                 threadPoolSizeSpinner.setValue(Integer.parseInt(config.getProperty(&quot;thread.pool.size&quot;)));
+ 790 |             }
+ 791 |             if (config.containsKey(&quot;simulation.interval&quot;)) {
+ 792 |                 simulationIntervalSpinner.setValue(Integer.parseInt(config.getProperty(&quot;simulation.interval&quot;)));
+ 793 |             }
+ 794 |             
+ 795 |             // Load DNS entries
+ 796 |             simulator.clearDNSEntries();
+ 797 |             if (config.containsKey(&quot;dns.count&quot;)) {
+ 798 |                 int dnsCount = Integer.parseInt(config.getProperty(&quot;dns.count&quot;));
+ 799 |                 for (int i = 0; i &lt; dnsCount; i++) {
+ 800 |                     String domain = config.getProperty(&quot;dns.&quot; + i + &quot;.domain&quot;);
+ 801 |                     String ip = config.getProperty(&quot;dns.&quot; + i + &quot;.ip&quot;);
+ 802 |                     if (domain != null &amp;&amp; ip != null) {
+ 803 |                         simulator.addDNSEntry(domain, ip);
+ 804 |                     }
+ 805 |                 }
+ 806 |             }
+ 807 |             
+ 808 |             refreshDNSTable();
+ 809 |             
+ 810 |             logArea.append(&quot;Configuration loaded: &quot; + configFile.getAbsolutePath() + &quot;\n&quot;);
+ 811 |             logArea.setCaretPosition(logArea.getDocument().getLength());
+ 812 |             
+ 813 |             JOptionPane.showMessageDialog(this, &quot;Configuration loaded successfully!&quot;, 
+ 814 |                                         &quot;Load Successful&quot;, JOptionPane.INFORMATION_MESSAGE);
+ 815 |             
+ 816 |         } catch (IOException | NumberFormatException e) {
+ 817 |             JOptionPane.showMessageDialog(this, &quot;Error loading configuration: &quot; + e.getMessage(), 
+ 818 |                                         &quot;Load Error&quot;, JOptionPane.ERROR_MESSAGE);
+ 819 |         }
+ 820 |     }
+ 821 | 
+ 822 |     private void loadDefaultConfiguration() {
+ 823 |         // Set default thread configuration
+ 824 |         threadPoolSizeSpinner.setValue(5);
+ 825 |         simulationIntervalSpinner.setValue(1000);
+ 826 |         
+ 827 |         // Reset DNS to defaults
+ 828 |         simulator.clearDNSEntries();
+ 829 |         
+ 830 |         // Add some sample DNS entries
+ 831 |         simulator.addDNSEntry(&quot;service1.example.com&quot;, &quot;192.168.1.10&quot;);
+ 832 |         simulator.addDNSEntry(&quot;service2.example.com&quot;, &quot;192.168.1.11&quot;);
+ 833 |         simulator.addDNSEntry(&quot;database.example.com&quot;, &quot;192.168.1.20&quot;);
+ 834 |         simulator.addDNSEntry(&quot;api.example.com&quot;, &quot;192.168.1.30&quot;);
+ 835 |         simulator.addDNSEntry(&quot;cache.example.com&quot;, &quot;192.168.1.40&quot;);
+ 836 |         
+ 837 |         refreshDNSTable();
+ 838 |         
+ 839 |         logArea.append(&quot;Default configuration loaded with sample DNS entries.\n&quot;);
+ 840 |         logArea.setCaretPosition(logArea.getDocument().getLength());
+ 841 |         
+ 842 |         JOptionPane.showMessageDialog(this, &quot;Default configuration loaded successfully!&quot;, 
+ 843 |                                     &quot;Default Loaded&quot;, JOptionPane.INFORMATION_MESSAGE);
+ 844 |     }
+ 845 | 
+ 846 |     @Override
+ 847 |     public void dispose() {
+ 848 |         if (guiUpdateExecutor != null) {
+ 849 |             guiUpdateExecutor.shutdown();
+ 850 |         }
+ 851 |         if (simulator != null) {
+ 852 |             simulator.stopSimulation();
+ 853 |         }
+ 854 |         super.dispose();
+ 855 |     }
+ 856 |     
+ 857 |     public static void main(String[] args) {
+ 858 |         SwingUtilities.invokeLater(() -&gt; {
+ 859 |             new SimulatorGUI().setVisible(true);
+ 860 |         });
+ 861 |     }
+ 862 | } 
+</pre>
+
+    <div class="file-header" id="StructuredNamingService_java">
+        <h2>StructuredNamingService.java</h2>
+        <div class="file-path">File: StructuredNamingService.java</div>
+        <div class="file-path">Language: JAVA</div>
+        <div class="file-path">Lines: 140</div>
+    </div>
+    
+    <pre class="java-code">   1 | package Final;
+   2 | 
+   3 | import java.util.*;
+   4 | import java.util.concurrent.ConcurrentHashMap;
+   5 | 
+   6 | /**
+   7 |  * Structured naming service using hierarchical paths
+   8 |  * Similar to DNS or file system paths
+   9 |  */
+  10 | public class StructuredNamingService {
+  11 |     private final Map&lt;String, Resource&gt; pathToResource;
+  12 | 
+  13 |     public StructuredNamingService() {
+  14 |         this.pathToResource = new ConcurrentHashMap&lt;&gt;();
+  15 |     }
+  16 | 
+  17 |     /**
+  18 |      * Register a resource with a hierarchical path
+  19 |      */
+  20 |     public void register(String path, Resource resource) {
+  21 |         if (!isValidPath(path)) {
+  22 |             throw new IllegalArgumentException(&quot;Invalid path format: &quot; + path + &quot;. Must start with &#x27;/&#x27;&quot;);
+  23 |         }
+  24 |         
+  25 |         pathToResource.put(path.toLowerCase(), resource);
+  26 |         System.out.println(&quot;Structured naming: Registered &#x27;&quot; + path + &quot;&#x27; -&gt; &quot; + resource.getLocation());
+  27 |     }
+  28 | 
+  29 |     /**
+  30 |      * Lookup a resource by hierarchical path
+  31 |      */
+  32 |     public Optional&lt;String&gt; lookup(String path) {
+  33 |         if (!isValidPath(path)) {
+  34 |             System.out.println(&quot;Structured naming: Invalid path format &#x27;&quot; + path + &quot;&#x27;&quot;);
+  35 |             return Optional.empty();
+  36 |         }
+  37 | 
+  38 |         Resource resource = pathToResource.get(path.toLowerCase());
+  39 |         if (resource != null) {
+  40 |             System.out.println(&quot;Structured naming: Found &#x27;&quot; + path + &quot;&#x27; -&gt; &quot; + resource.getLocation());
+  41 |             return Optional.of(resource.getLocation());
+  42 |         } else {
+  43 |             System.out.println(&quot;Structured naming: Not found &#x27;&quot; + path + &quot;&#x27;&quot;);
+  44 |             return Optional.empty();
+  45 |         }
+  46 |     }
+  47 | 
+  48 |     /**
+  49 |      * Remove a resource from the naming service
+  50 |      */
+  51 |     public boolean remove(String path) {
+  52 |         Resource removed = pathToResource.remove(path.toLowerCase());
+  53 |         if (removed != null) {
+  54 |             System.out.println(&quot;Structured naming: Removed &#x27;&quot; + path + &quot;&#x27;&quot;);
+  55 |             return true;
+  56 |         }
+  57 |         return false;
+  58 |     }
+  59 | 
+  60 |     /**
+  61 |      * List all resources under a specific path prefix
+  62 |      */
+  63 |     public List&lt;String&gt; listChildren(String parentPath) {
+  64 |         if (!isValidPath(parentPath)) {
+  65 |             return new ArrayList&lt;&gt;();
+  66 |         }
+  67 | 
+  68 |         List&lt;String&gt; children = new ArrayList&lt;&gt;();
+  69 |         String prefix = parentPath.toLowerCase();
+  70 |         if (!prefix.endsWith(&quot;/&quot;)) {
+  71 |             prefix += &quot;/&quot;;
+  72 |         }
+  73 | 
+  74 |         for (String path : pathToResource.keySet()) {
+  75 |             if (path.startsWith(prefix) &amp;&amp; !path.equals(parentPath.toLowerCase())) {
+  76 |                 // Find immediate children only
+  77 |                 String relativePath = path.substring(prefix.length());
+  78 |                 int slashIndex = relativePath.indexOf(&#x27;/&#x27;);
+  79 |                 String childName = slashIndex == -1 ? relativePath : relativePath.substring(0, slashIndex);
+  80 |                 
+  81 |                 if (!children.contains(childName)) {
+  82 |                     children.add(childName);
+  83 |                 }
+  84 |             }
+  85 |         }
+  86 | 
+  87 |         return children;
+  88 |     }
+  89 | 
+  90 |     /**
+  91 |      * Validate path format
+  92 |      */
+  93 |     private boolean isValidPath(String path) {
+  94 |         return path != null &amp;&amp; path.startsWith(&quot;/&quot;);
+  95 |     }
+  96 | 
+  97 |     /**
+  98 |      * Get all registered paths
+  99 |      */
+ 100 |     public Set&lt;String&gt; getAllPaths() {
+ 101 |         return new HashSet&lt;&gt;(pathToResource.keySet());
+ 102 |     }
+ 103 | 
+ 104 |     /**
+ 105 |      * Get the number of entries
+ 106 |      */
+ 107 |     public int size() {
+ 108 |         return pathToResource.size();
+ 109 |     }
+ 110 | 
+ 111 |     /**
+ 112 |      * Check if a path exists
+ 113 |      */
+ 114 |     public boolean contains(String path) {
+ 115 |         return pathToResource.containsKey(path.toLowerCase());
+ 116 |     }
+ 117 | 
+ 118 |     /**
+ 119 |      * Clear all entries
+ 120 |      */
+ 121 |     public void clear() {
+ 122 |         pathToResource.clear();
+ 123 |     }
+ 124 | 
+ 125 |     /**
+ 126 |      * Print all entries in a tree-like format
+ 127 |      */
+ 128 |     public void printAll() {
+ 129 |         System.out.println(&quot;Structured Naming Service entries:&quot;);
+ 130 |         List&lt;String&gt; sortedPaths = new ArrayList&lt;&gt;(pathToResource.keySet());
+ 131 |         Collections.sort(sortedPaths);
+ 132 |         
+ 133 |         for (String path : sortedPaths) {
+ 134 |             Resource resource = pathToResource.get(path);
+ 135 |             int depth = path.split(&quot;/&quot;).length - 1;
+ 136 |             String indent = &quot;  &quot;.repeat(depth);
+ 137 |             System.out.println(indent + path + &quot; -&gt; &quot; + resource.getLocation());
+ 138 |         }
+ 139 |     }
+ 140 | } 
+</pre>
+
+    <div class="file-header" id="ENHANCED_FEATURES_SUMMARY_md">
+        <h2>ENHANCED_FEATURES_SUMMARY.md</h2>
+        <div class="file-path">File: ENHANCED_FEATURES_SUMMARY.md</div>
+        <div class="file-path">Language: MARKDOWN</div>
+        <div class="file-path">Lines: 161</div>
+    </div>
+    
+    <pre class="markdown-code">   1 | # Enhanced Distributed System Simulator GUI - Feature Summary
+   2 | 
+   3 | ## Overview
+   4 | The Distributed System Simulator GUI has been significantly enhanced with new features for DNS management, thread configuration, and configuration persistence. These improvements make the simulator more powerful and user-friendly for educational and research purposes.
+   5 | 
+   6 | ## New Features Added
+   7 | 
+   8 | ### 1. DNS Management System ✅
+   9 | - **Add DNS Entries**: Create new domain-to-IP mappings through the GUI
+  10 | - **Remove DNS Entries**: Delete specific DNS entries via table selection
+  11 | - **Clear All DNS**: Reset to default DNS configuration
+  12 | - **DNS Table View**: Visual table showing all current DNS mappings
+  13 | - **Input Validation**: Ensures proper domain and IP address formats
+  14 | - **Real-time Updates**: DNS table updates immediately after changes
+  15 | 
+  16 | **Location**: Configuration Panel → DNS Management Tab
+  17 | 
+  18 | ### 2. Thread Configuration ✅
+  19 | - **Thread Pool Size Control**: Adjust concurrent thread count (1-50)
+  20 | - **Simulation Interval Control**: Configure timing between operations (100-10000ms)
+  21 | - **Performance Guidelines**: Built-in recommendations for optimal settings
+  22 | - **Runtime Application**: Apply changes during simulation runtime
+  23 | - **Configuration Persistence**: Thread settings saved with configurations
+  24 | 
+  25 | **Location**: Configuration Panel → Thread Config Tab
+  26 | 
+  27 | ### 3. Save/Load Configuration System ✅
+  28 | - **Save Configurations**: Store complete system state to files
+  29 | - **Load Configurations**: Restore previously saved configurations
+  30 | - **Default Configuration**: Pre-configured setup with sample data
+  31 | - **File Management**: Automatic creation of configs directory
+  32 | - **Comprehensive Storage**: Includes DNS entries, thread settings, and node states
+  33 | - **Properties Format**: Standard Java properties file format
+  34 | 
+  35 | **Location**: Configuration Panel → Save/Load Config Tab
+  36 | 
+  37 | ### 4. Enhanced GUI Layout ✅
+  38 | - **Tabbed Configuration Panel**: Organized configuration options
+  39 | - **Larger Window Size**: Increased from 1400x900 to 1600x1000
+  40 | - **Better Organization**: Logical grouping of related features
+  41 | - **Improved Usability**: Clear labels and helpful information panels
+  42 | 
+  43 | ### 5. Extended Functionality ✅
+  44 | - **Configuration File Samples**: Pre-created sample and high-performance configurations
+  45 | - **Error Handling**: Comprehensive error messages and validation
+  46 | - **User Feedback**: Status messages and confirmation dialogs
+  47 | - **Auto-refresh**: DNS table automatically updates after changes
+  48 | 
+  49 | ## Technical Implementation
+  50 | 
+  51 | ### DNS Management Backend
+  52 | - Extended `DNSSimulator` class with new management methods
+  53 | - Added `DistributedSystemSimulator` wrapper methods for GUI integration
+  54 | - Implemented proper validation and error handling
+  55 | 
+  56 | ### Thread Configuration Backend
+  57 | - Added thread pool and interval configuration storage
+  58 | - Implemented runtime configuration updates
+  59 | - Added getter methods for current configuration display
+  60 | 
+  61 | ### Configuration Persistence
+  62 | - Java Properties file format for cross-platform compatibility
+  63 | - Automatic directory creation for configuration storage
+  64 | - Comprehensive save/load with error recovery
+  65 | - Sample configurations for quick start
+  66 | 
+  67 | ## Files Modified/Created
+  68 | 
+  69 | ### Modified Files
+  70 | 1. **SimulatorGUI.java**: Major enhancements with new panels and functionality
+  71 | 2. **DistributedSystemSimulator.java**: Added DNS and thread management methods
+  72 | 
+  73 | ### New Files Created
+  74 | 1. **GUI_README.md**: Comprehensive user guide
+  75 | 2. **ENHANCED_FEATURES_SUMMARY.md**: This feature summary
+  76 | 3. **configs/sample.properties**: Sample configuration file
+  77 | 4. **configs/high-performance.properties**: High-performance configuration
+  78 | 
+  79 | ## Usage Examples
+  80 | 
+  81 | ### Quick Start with Default Configuration
+  82 | ```bash
+  83 | # Compile
+  84 | javac Final/*.java
+  85 | 
+  86 | # Run
+  87 | java Final.SimulatorGUI
+  88 | 
+  89 | # In GUI: Configuration Panel → Save/Load Config → Load Default Configuration
+  90 | ```
+  91 | 
+  92 | ### Adding Custom DNS Entries
+  93 | ```
+  94 | 1. Go to DNS Management tab
+  95 | 2. Enter domain: &quot;myservice.local&quot;
+  96 | 3. Enter IP: &quot;192.168.1.100&quot;
+  97 | 4. Click &quot;Add DNS Entry&quot;
+  98 | 5. Verify in table below
+  99 | ```
+ 100 | 
+ 101 | ### Configuring High-Performance Testing
+ 102 | ```
+ 103 | 1. Go to Thread Config tab
+ 104 | 2. Set Thread Pool Size: 15
+ 105 | 3. Set Simulation Interval: 200ms
+ 106 | 4. Click &quot;Apply Thread Configuration&quot;
+ 107 | 5. Restart simulation for changes to take effect
+ 108 | ```
+ 109 | 
+ 110 | ### Saving Custom Configuration
+ 111 | ```
+ 112 | 1. Configure DNS entries and thread settings as desired
+ 113 | 2. Go to Save/Load Config tab
+ 114 | 3. Enter config name: &quot;my-setup&quot;
+ 115 | 4. Click &quot;Save Configuration&quot;
+ 116 | 5. File saved to configs/my-setup.properties
+ 117 | ```
+ 118 | 
+ 119 | ## Benefits
+ 120 | 
+ 121 | ### For Educators
+ 122 | - **Visual DNS Management**: Students can see DNS entries and understand domain resolution
+ 123 | - **Performance Tuning**: Experiment with different thread configurations
+ 124 | - **Scenario Management**: Save and share different simulation scenarios
+ 125 | - **Real-time Feedback**: Immediate visual feedback for all changes
+ 126 | 
+ 127 | ### For Researchers
+ 128 | - **Reproducible Experiments**: Save exact configurations for experiment repeatability
+ 129 | - **Performance Analysis**: Compare different configuration impacts
+ 130 | - **Scalability Testing**: Easy adjustment of concurrent operations
+ 131 | - **Data Export**: Configuration files can be version controlled and shared
+ 132 | 
+ 133 | ### For Developers
+ 134 | - **Rapid Prototyping**: Quick setup of different system configurations
+ 135 | - **Testing Scenarios**: Pre-configured setups for various test cases
+ 136 | - **Performance Benchmarking**: Standardized configurations for comparison
+ 137 | - **Documentation**: Configuration files serve as documentation
+ 138 | 
+ 139 | ## Compatibility
+ 140 | 
+ 141 | ### System Requirements
+ 142 | - **Java**: Java 8 or higher (unchanged)
+ 143 | - **Operating System**: Cross-platform (Windows, Linux, macOS)
+ 144 | - **Memory**: Recommended 512MB+ for large configurations
+ 145 | - **Storage**: Minimal (configuration files are small)
+ 146 | 
+ 147 | ### Backward Compatibility
+ 148 | - **Existing Code**: All existing functionality preserved
+ 149 | - **File Format**: Standard properties format ensures compatibility
+ 150 | - **Default Behavior**: System works with defaults if no configuration loaded
+ 151 | 
+ 152 | ## Future Enhancement Possibilities
+ 153 | 
+ 154 | ### Potential Additions
+ 155 | - **Import/Export**: JSON format support for easier editing
+ 156 | - **Configuration Templates**: More pre-defined scenarios
+ 157 | - **Performance Profiling**: Built-in performance analysis tools
+ 158 | - **Network Topology**: Visual network configuration
+ 159 | - **Plugin System**: Extensible architecture for custom components
+ 160 | 
+ 161 | This enhanced GUI provides a comprehensive platform for distributed systems education, research, and development while maintaining simplicity and ease of use. 
+</pre>
+
+    <div class="file-header" id="GUI_README_md">
+        <h2>GUI_README.md</h2>
+        <div class="file-path">File: GUI_README.md</div>
+        <div class="file-path">Language: MARKDOWN</div>
+        <div class="file-path">Lines: 304</div>
+    </div>
+    
+    <pre class="markdown-code">   1 | # Distributed System Simulator GUI - User Guide
+   2 | 
+   3 | This comprehensive GUI provides a powerful interface for simulating and analyzing distributed systems with support for various naming services, consistency models, and performance analysis.
+   4 | 
+   5 | ## Table of Contents
+   6 | 1. [Getting Started](#getting-started)
+   7 | 2. [Main Interface Overview](#main-interface-overview)
+   8 | 3. [Simulation Controls](#simulation-controls)
+   9 | 4. [DNS Management](#dns-management)
+  10 | 5. [Thread Configuration](#thread-configuration)
+  11 | 6. [Configuration Save/Load](#configuration-saveload)
+  12 | 7. [Performance Monitoring](#performance-monitoring)
+  13 | 8. [Analysis Tools](#analysis-tools)
+  14 | 9. [Advanced Features](#advanced-features)
+  15 | 10. [Troubleshooting](#troubleshooting)
+  16 | 
+  17 | ## Getting Started
+  18 | 
+  19 | ### Prerequisites
+  20 | - Java 8 or higher
+  21 | - All source files in the `Final` package
+  22 | 
+  23 | ### Running the Application
+  24 | ```bash
+  25 | # Compile all Java files
+  26 | javac Final/*.java
+  27 | 
+  28 | # Run the GUI application
+  29 | java Final.SimulatorGUI
+  30 | ```
+  31 | 
+  32 | ### First Launch
+  33 | 1. The application starts with a stopped simulation
+  34 | 2. Default configuration includes 3 nodes (NodeA, NodeB, NodeC)
+  35 | 3. Basic DNS entries are pre-loaded
+  36 | 4. Default thread pool size is 5 with 1000ms intervals
+  37 | 
+  38 | ## Main Interface Overview
+  39 | 
+  40 | The GUI is organized into several main sections:
+  41 | 
+  42 | ### Top Panel - Simulation Controls
+  43 | - **Start/Stop Simulation**: Controls the main simulation
+  44 | - **Node Operations**: Execute operations on specific nodes
+  45 | - **Naming Service Lookups**: Test different naming services
+  46 | - **Failure Simulation**: Simulate node failures and recovery
+  47 | 
+  48 | ### Center Panel - Configuration Tabs
+  49 | - **DNS Management**: Add, remove, and manage DNS entries
+  50 | - **Thread Config**: Configure thread pool and simulation timing
+  51 | - **Save/Load Config**: Manage configuration files
+  52 | 
+  53 | ### Left Panel - Real-time Monitoring
+  54 | - **Performance Metrics**: Live performance statistics
+  55 | - **Performance History**: Historical data table
+  56 | 
+  57 | ### Right Panel - Analysis Tools
+  58 | - **Trade-off Analysis**: Compare different approaches
+  59 | - **Performance Analysis**: Detailed performance insights
+  60 | - **Consistency Analysis**: Consistency model comparisons
+  61 | 
+  62 | ### Bottom Panel - System Logs
+  63 | - **Activity Logs**: Real-time system activity
+  64 | - **System Status**: Current state information
+  65 | 
+  66 | ## Simulation Controls
+  67 | 
+  68 | ### Starting/Stopping Simulation
+  69 | 1. **Start Simulation**: Begins automated operations across all nodes
+  70 | 2. **Stop Simulation**: Halts all automated operations
+  71 | 3. **Status Indicator**: Shows current simulation state
+  72 | 
+  73 | ### Manual Operations
+  74 | 1. **Select Node**: Choose from NodeA, NodeB, or NodeC
+  75 | 2. **Select Operation**: 
+  76 |    - `PUT`: Store a key-value pair
+  77 |    - `GET`: Retrieve a value by key
+  78 |    - `DELETE`: Remove a key-value pair
+  79 |    - `DEPOSIT`: Add to account balance
+  80 |    - `WITHDRAW`: Subtract from account balance
+  81 | 3. **Enter Key/Value**: Specify operation parameters
+  82 | 4. **Execute**: Perform the operation
+  83 | 
+  84 | ### Naming Service Testing
+  85 | 1. **Select Naming Type**:
+  86 |    - `flat`: Simple flat namespace
+  87 |    - `structured`: Hierarchical namespace
+  88 |    - `dns`: Domain Name System simulation
+  89 | 2. **Enter Resource Name**: Name to lookup
+  90 | 3. **Lookup**: Perform the naming resolution
+  91 | 
+  92 | ### Failure Simulation
+  93 | - **Simulate Failure**: Make selected node unavailable
+  94 | - **Recover Node**: Restore failed node to operation
+  95 | 
+  96 | ## DNS Management
+  97 | 
+  98 | The DNS Management tab provides comprehensive DNS configuration:
+  99 | 
+ 100 | ### Adding DNS Entries
+ 101 | 1. Enter **Domain Name** (e.g., `api.example.com`)
+ 102 | 2. Enter **IP Address** (e.g., `192.168.1.100`)
+ 103 | 3. Click **Add DNS Entry**
+ 104 | 4. Entry appears in the DNS table
+ 105 | 
+ 106 | ### Managing Existing Entries
+ 107 | - **View All Entries**: DNS table shows all current mappings
+ 108 | - **Remove Entry**: Select row and click &quot;Remove Selected&quot;
+ 109 | - **Clear All**: Reset to default DNS entries
+ 110 | - **Refresh Table**: Update display with current entries
+ 111 | 
+ 112 | ### DNS Entry Validation
+ 113 | - Domain names are case-insensitive
+ 114 | - IP addresses must follow standard IPv4 format (x.x.x.x)
+ 115 | - Duplicate domains will overwrite existing entries
+ 116 | 
+ 117 | ### Default DNS Entries
+ 118 | - `localhost` → `127.0.0.1`
+ 119 | - `example.com` → `192.0.2.1`
+ 120 | - `www.example.com` → `192.0.2.1`
+ 121 | 
+ 122 | ## Thread Configuration
+ 123 | 
+ 124 | ### Thread Pool Settings
+ 125 | - **Thread Pool Size**: Number of concurrent threads (1-50)
+ 126 |   - Recommended: 3-10 for most scenarios
+ 127 |   - Higher values increase parallelism but add overhead
+ 128 | - **Simulation Interval**: Time between operations (100-10000ms)
+ 129 |   - Lower values create higher system load
+ 130 |   - Higher values provide more stable simulation
+ 131 | 
+ 132 | ### Applying Configuration
+ 133 | 1. Adjust spinners to desired values
+ 134 | 2. Click **Apply Thread Configuration**
+ 135 | 3. **Important**: Restart simulation for changes to take effect
+ 136 | 
+ 137 | ### Performance Impact
+ 138 | - **More Threads**: Better parallelism, higher resource usage
+ 139 | - **Lower Intervals**: More realistic high-load scenarios
+ 140 | - **Higher Intervals**: Better for observing individual operations
+ 141 | 
+ 142 | ## Configuration Save/Load
+ 143 | 
+ 144 | ### Saving Configurations
+ 145 | 1. Enter a **Config Name** (no file extension needed)
+ 146 | 2. Click **Save Configuration**
+ 147 | 3. File saved to `configs/[name].properties`
+ 148 | 4. Includes:
+ 149 |    - DNS entries
+ 150 |    - Thread settings
+ 151 |    - Node configurations
+ 152 |    - Current simulation state
+ 153 | 
+ 154 | ### Loading Configurations
+ 155 | 1. Enter existing **Config Name**
+ 156 | 2. Click **Load Configuration**
+ 157 | 3. All settings restored from file
+ 158 | 4. DNS table automatically updated
+ 159 | 
+ 160 | ### Default Configuration
+ 161 | - Click **Load Default Configuration** for pre-configured setup
+ 162 | - Includes sample DNS entries and optimal settings
+ 163 | - Useful for quick demos or reset scenarios
+ 164 | 
+ 165 | ### Configuration Files
+ 166 | - Stored in `configs/` directory (auto-created)
+ 167 | - Standard Java Properties format
+ 168 | - Can be manually edited if needed
+ 169 | - Include timestamps and descriptions
+ 170 | 
+ 171 | ## Performance Monitoring
+ 172 | 
+ 173 | ### Real-time Metrics
+ 174 | - **Total Operations**: Cumulative operation count
+ 175 | - **Consistency Violations**: Percentage of consistency issues
+ 176 | - **Average Latency**: Mean operation response time
+ 177 | - **System Load**: Visual load indicator
+ 178 | 
+ 179 | ### Performance History Table
+ 180 | - **Timestamp**: When measurement was taken
+ 181 | - **Operations**: Total operations at that time
+ 182 | - **Violations %**: Consistency violation percentage
+ 183 | - **Latency (ms)**: Average latency measurement
+ 184 | - **Auto-scrolling**: Latest entries always visible
+ 185 | - **Limited History**: Keeps last 20 measurements
+ 186 | 
+ 187 | ### Monitoring Frequency
+ 188 | - Metrics updated every 1 second
+ 189 | - Performance data collected every 2 seconds
+ 190 | - GUI remains responsive during heavy simulation
+ 191 | 
+ 192 | ## Analysis Tools
+ 193 | 
+ 194 | ### Performance Analysis
+ 195 | Click **Analyze Performance** for detailed insights:
+ 196 | - Current performance snapshot
+ 197 | - Trend analysis (when sufficient data available)
+ 198 | - Warning alerts for concerning metrics
+ 199 | - Recommendations for optimization
+ 200 | 
+ 201 | ### Naming Services Comparison
+ 202 | Click **Compare Naming** for feature comparison:
+ 203 | - **Flat Naming**: Pros, cons, and use cases
+ 204 | - **Structured Naming**: Hierarchical benefits
+ 205 | - **DNS Simulation**: Internet-scale considerations
+ 206 | - **Recommendations**: Best choice for different scenarios
+ 207 | 
+ 208 | ### Consistency Models Analysis
+ 209 | Click **Analyze Consistency** for deep dive:
+ 210 | - **Sequential Consistency**: Strong guarantees
+ 211 | - **Eventual Consistency**: High availability approach
+ 212 | - **Client-centric**: Balanced approach
+ 213 | - **Trade-offs**: CAP theorem implications
+ 214 | - **Current Status**: Assessment of system consistency
+ 215 | 
+ 216 | ## Advanced Features
+ 217 | 
+ 218 | ### Log Management
+ 219 | - **Clear Logs**: Remove all log entries
+ 220 | - **Auto-scroll**: Logs automatically scroll to latest
+ 221 | - **System Status**: Print detailed status to console
+ 222 | - **Operation Logging**: All operations logged with timestamps
+ 223 | 
+ 224 | ### Node Management
+ 225 | - **Multi-node Operations**: Operations distributed across nodes
+ 226 | - **Failure Recovery**: Automatic sync after recovery
+ 227 | - **Load Balancing**: Operations distributed for realism
+ 228 | 
+ 229 | ### Network Simulation
+ 230 | - **Partition Recovery**: Simulated network healing
+ 231 | - **Latency Simulation**: Realistic timing delays
+ 232 | - **Failure Modes**: Various failure scenarios
+ 233 | 
+ 234 | ## Troubleshooting
+ 235 | 
+ 236 | ### Common Issues
+ 237 | 
+ 238 | #### Simulation Won&#x27;t Start
+ 239 | - **Check**: All nodes initialized correctly
+ 240 | - **Solution**: Restart application if needed
+ 241 | - **Logs**: Check system logs for error messages
+ 242 | 
+ 243 | #### DNS Entries Not Saving
+ 244 | - **Check**: Valid domain and IP format
+ 245 | - **Check**: Write permissions for `configs/` directory
+ 246 | - **Solution**: Try default configuration first
+ 247 | 
+ 248 | #### High Consistency Violations
+ 249 | - **Cause**: High system load or network issues
+ 250 | - **Solution**: Increase simulation intervals
+ 251 | - **Solution**: Reduce thread pool size
+ 252 | 
+ 253 | #### Performance Lag
+ 254 | - **Cause**: Too many concurrent operations
+ 255 | - **Solution**: Stop simulation temporarily
+ 256 | - **Solution**: Clear performance history
+ 257 | - **Solution**: Reduce thread count
+ 258 | 
+ 259 | ### Configuration File Issues
+ 260 | - **Location**: Files in `configs/` directory
+ 261 | - **Format**: Standard Java Properties
+ 262 | - **Backup**: Keep copies of working configurations
+ 263 | - **Reset**: Use &quot;Load Default&quot; to restore working state
+ 264 | 
+ 265 | ### Memory Usage
+ 266 | - **Long Running**: Clear logs periodically
+ 267 | - **Performance Data**: Limited to last 20 entries
+ 268 | - **Large Configurations**: Monitor system resources
+ 269 | 
+ 270 | ## Tips for Effective Use
+ 271 | 
+ 272 | ### Performance Testing
+ 273 | 1. Start with default configuration
+ 274 | 2. Gradually increase load (reduce intervals)
+ 275 | 3. Monitor consistency violations
+ 276 | 4. Save successful configurations
+ 277 | 
+ 278 | ### Demonstration Scenarios
+ 279 | 1. Load default configuration for quick demo
+ 280 | 2. Show different naming services in action
+ 281 | 3. Simulate failures to show recovery
+ 282 | 4. Compare consistency models with analysis tools
+ 283 | 
+ 284 | ### Educational Use
+ 285 | 1. Use analysis tools to explain concepts
+ 286 | 2. Show trade-offs between different approaches
+ 287 | 3. Experiment with configuration changes
+ 288 | 4. Save different scenarios as named configurations
+ 289 | 
+ 290 | ### Development Testing
+ 291 | 1. Create configurations for different test scenarios
+ 292 | 2. Use performance monitoring to validate changes
+ 293 | 3. Export configurations for team sharing
+ 294 | 4. Document performance baselines
+ 295 | 
+ 296 | ## Support
+ 297 | 
+ 298 | For additional help:
+ 299 | - Check the console output for detailed error messages
+ 300 | - Verify all Java files are compiled correctly
+ 301 | - Ensure proper file permissions for configuration directory
+ 302 | - Review system requirements and dependencies
+ 303 | 
+ 304 | The simulator provides comprehensive logging to help diagnose issues and understand system behavior. 
+</pre>
+
+    <div class="file-header" id="README_md">
+        <h2>README.md</h2>
+        <div class="file-path">File: README.md</div>
+        <div class="file-path">Language: MARKDOWN</div>
+        <div class="file-path">Lines: 278</div>
+    </div>
+    
+    <pre class="markdown-code">   1 | # 🚀 Integrated Distributed System Simulator
+   2 | 
+   3 | ## Overview
+   4 | 
+   5 | This comprehensive simulation combines **multithreading**, **consistency models**, and **naming services** into a unified distributed system simulator with a graphical user interface for analysis and performance evaluation.
+   6 | 
+   7 | ## 🏗️ Architecture
+   8 | 
+   9 | ### Core Components
+  10 | 
+  11 | #### 1. **DistributedSystemSimulator** - Main Orchestrator
+  12 | - Manages 3 service nodes (NodeA, NodeB, NodeC)
+  13 | - Coordinates different consistency models
+  14 | - Integrates all naming services
+  15 | - Provides performance monitoring
+  16 | 
+  17 | #### 2. **ServiceNode** - Distributed System Participants
+  18 | - **Multithreading**: Each node runs in separate threads
+  19 | - **Shared Resource Management**: Thread-safe operations (deposit/withdraw)
+  20 | - **Data Storage**: Key-value store with consistency tracking
+  21 | - **Client-Centric Consistency**: Per-client version tracking
+  22 | - **Failure Simulation**: Node can fail and recover
+  23 | 
+  24 | #### 3. **Consistency Models**
+  25 | - **Sequential Consistency**: Central coordinator ensures same operation order
+  26 | - **Eventual Consistency**: Nodes sync periodically with delays
+  27 | - **Client-Centric Consistency**: Read-your-writes guarantees
+  28 | 
+  29 | #### 4. **Naming Services**
+  30 | - **Flat Naming**: Hash table (dictionary) approach - O(1) lookup
+  31 | - **Structured Naming**: Hierarchical paths like `/services/nodea-service`
+  32 | - **DNS Simulation**: Domain name to IP address resolution
+  33 | 
+  34 | #### 5. **Performance Analysis GUI**
+  35 | - Real-time monitoring dashboard
+  36 | - Performance metrics collection
+  37 | - Trade-off analysis tools
+  38 | - Interactive controls for operations
+  39 | 
+  40 | ## 🎯 Features Implemented
+  41 | 
+  42 | ### ✅ Core Requirements
+  43 | 
+  44 | 1. **2-3 Processes/Services**: NodeA, NodeB, NodeC running concurrently
+  45 | 2. **Multithreading**: 
+  46 |    - Each node runs in separate thread
+  47 |    - Thread-safe shared resource operations
+  48 |    - Concurrent data access with proper synchronization
+  49 | 3. **Flat Naming**: Dictionary-based resource lookup
+  50 | 4. **Structured Naming**: Hierarchical DNS-like paths
+  51 | 5. **Sequential Consistency**: Central log with ordered operations
+  52 | 6. **Eventual Consistency**: Delayed synchronization with network simulation
+  53 | 7. **Client-Centric Consistency**: Version tracking per client
+  54 | 
+  55 | ### ✅ GUI Features
+  56 | 
+  57 | 1. **Interactive Controls**:
+  58 |    - Start/Stop simulation
+  59 |    - Execute operations on specific nodes
+  60 |    - Simulate node failures and recovery
+  61 |    - Resource lookups using different naming services
+  62 | 
+  63 | 2. **Real-time Monitoring**:
+  64 |    - Live performance metrics
+  65 |    - Operation count tracking
+  66 |    - Consistency violation monitoring
+  67 |    - System latency measurement
+  68 | 
+  69 | 3. **Analysis Tools**:
+  70 |    - Performance trend analysis
+  71 |    - Naming service comparison
+  72 |    - Consistency model trade-offs
+  73 |    - System status reports
+  74 | 
+  75 | ## 🚀 How to Run
+  76 | 
+  77 | ### Prerequisites
+  78 | - Java 8 or higher
+  79 | - Swing GUI support
+  80 | 
+  81 | ### Compilation
+  82 | ```bash
+  83 | cd &quot;/home/squid/devops/unisza/dcs 2/Final&quot;
+  84 | javac *.java
+  85 | ```
+  86 | 
+  87 | ### Execution
+  88 | ```bash
+  89 | java Final.DistributedSystemSimulator
+  90 | ```
+  91 | 
+  92 | ## 🎮 Usage Guide
+  93 | 
+  94 | ### Starting the Simulation
+  95 | 1. Click **&quot;Start Simulation&quot;** to begin the distributed system
+  96 | 2. Watch real-time metrics in the monitoring panel
+  97 | 3. Observe system logs in the bottom panel
+  98 | 
+  99 | ### Testing Operations
+ 100 | 1. **Select Node**: Choose NodeA, NodeB, or NodeC
+ 101 | 2. **Choose Operation**: PUT, GET, DELETE, DEPOSIT, WITHDRAW
+ 102 | 3. **Enter Key/Value**: For data operations
+ 103 | 4. **Execute**: Click &quot;Execute Operation&quot;
+ 104 | 
+ 105 | ### Testing Naming Services
+ 106 | 1. **Select Naming Type**: flat, structured, or dns
+ 107 | 2. **Enter Resource Name**: 
+ 108 |    - Flat: `nodea-service`
+ 109 |    - Structured: `/services/nodea-service`
+ 110 |    - DNS: `nodea-service.example.com`
+ 111 | 3. **Lookup**: Click &quot;Lookup Resource&quot;
+ 112 | 
+ 113 | ### Failure Testing
+ 114 | 1. **Select Node**: Choose target node
+ 115 | 2. **Simulate Failure**: Click &quot;Simulate Failure&quot;
+ 116 | 3. **Observe**: Watch consistency mechanisms handle failure
+ 117 | 4. **Recover**: Click &quot;Recover Node&quot; to restore
+ 118 | 
+ 119 | ### Performance Analysis
+ 120 | 1. **Analyze Performance**: View current system metrics
+ 121 | 2. **Compare Naming**: Understand trade-offs between naming services
+ 122 | 3. **Analyze Consistency**: Learn about consistency model implications
+ 123 | 
+ 124 | ## 📊 Performance Metrics
+ 125 | 
+ 126 | ### Monitored Metrics
+ 127 | - **Total Operations**: Count of all system operations
+ 128 | - **Consistency Violations**: Percentage of consistency issues
+ 129 | - **Average Latency**: System response time
+ 130 | - **System Load**: Current processing load
+ 131 | 
+ 132 | ### Analysis Features
+ 133 | - **Trend Analysis**: Performance over time
+ 134 | - **Violation Tracking**: Consistency guarantee monitoring
+ 135 | - **Latency Monitoring**: Response time analysis
+ 136 | - **Load Balancing**: Distribution across nodes
+ 137 | 
+ 138 | ## 🔄 Threading Architecture
+ 139 | 
+ 140 | ### Thread Distribution
+ 141 | - **Main GUI Thread**: User interface management
+ 142 | - **Node Threads**: 3 threads for service nodes
+ 143 | - **Coordination Thread**: Sequential consistency management
+ 144 | - **Sync Thread**: Eventual consistency synchronization
+ 145 | - **Monitor Thread**: Performance metric collection
+ 146 | - **GUI Update Thread**: Real-time display updates
+ 147 | 
+ 148 | ### Synchronization Mechanisms
+ 149 | - **Synchronized Blocks**: Thread-safe shared resource access
+ 150 | - **ConcurrentHashMap**: Thread-safe data storage
+ 151 | - **AtomicInteger**: Atomic sequence number generation
+ 152 | - **ExecutorService**: Managed thread pool
+ 153 | 
+ 154 | ## 🏛️ Consistency Models Deep Dive
+ 155 | 
+ 156 | ### Sequential Consistency
+ 157 | ```
+ 158 | Operation Flow:
+ 159 | Client -&gt; Central Coordinator -&gt; Assign Sequence -&gt; Broadcast to All Nodes
+ 160 | ```
+ 161 | - **Guarantee**: All nodes see operations in same order
+ 162 | - **Trade-off**: Higher latency for stronger consistency
+ 163 | 
+ 164 | ### Eventual Consistency
+ 165 | ```
+ 166 | Update Flow:
+ 167 | Node Updates Locally -&gt; Periodic Sync -&gt; Eventually Consistent
+ 168 | ```
+ 169 | - **Guarantee**: Convergence given no new updates
+ 170 | - **Trade-off**: Temporary inconsistency for better performance
+ 171 | 
+ 172 | ### Client-Centric Consistency
+ 173 | ```
+ 174 | Client Flow:
+ 175 | Write Operation -&gt; Version Tracking -&gt; Read from Suitable Node
+ 176 | ```
+ 177 | - **Guarantee**: Read-your-writes, monotonic reads
+ 178 | - **Trade-off**: Balanced consistency and performance
+ 179 | 
+ 180 | ## 🗂️ Naming Services Comparison
+ 181 | 
+ 182 | | Feature | Flat Naming | Structured Naming | DNS Simulation |
+ 183 | |---------|-------------|-------------------|----------------|
+ 184 | | **Lookup Time** | O(1) | O(1) | O(1) + Network |
+ 185 | | **Organization** | None | Hierarchical | Domain-based |
+ 186 | | **Scalability** | Limited | Good | Excellent |
+ 187 | | **Complexity** | Low | Medium | High |
+ 188 | | **Use Case** | Local services | Organized systems | Internet-scale |
+ 189 | 
+ 190 | ## 🎯 Trade-off Analysis
+ 191 | 
+ 192 | ### Performance vs Consistency
+ 193 | - **Strong Consistency**: Higher latency, guaranteed correctness
+ 194 | - **Eventual Consistency**: Lower latency, temporary inconsistency
+ 195 | - **Client-Centric**: Balanced approach with per-client guarantees
+ 196 | 
+ 197 | ### Naming Service Trade-offs
+ 198 | - **Flat**: Fast but unorganized
+ 199 | - **Structured**: Organized but requires path management
+ 200 | - **DNS**: Scalable but network-dependent
+ 201 | 
+ 202 | ### Threading vs Process Design
+ 203 | - **Threading**: Shared memory, faster communication
+ 204 | - **Processes**: Isolation, better fault tolerance
+ 205 | - **Current Choice**: Threading for simulation simplicity
+ 206 | 
+ 207 | ## 🔍 Testing Scenarios
+ 208 | 
+ 209 | ### High Concurrency Testing
+ 210 | 1. Start simulation
+ 211 | 2. Execute rapid operations on multiple nodes
+ 212 | 3. Observe consistency violation metrics
+ 213 | 4. Analyze performance under load
+ 214 | 
+ 215 | ### Node Failure Testing
+ 216 | 1. Simulate node failure during operations
+ 217 | 2. Observe system recovery mechanisms
+ 218 | 3. Test eventual consistency synchronization
+ 219 | 4. Verify data integrity after recovery
+ 220 | 
+ 221 | ### Naming Service Comparison
+ 222 | 1. Test same resource lookup across all naming types
+ 223 | 2. Compare response times
+ 224 | 3. Analyze success rates
+ 225 | 4. Evaluate organizational benefits
+ 226 | 
+ 227 | ## 📈 Expected Results
+ 228 | 
+ 229 | ### Performance Characteristics
+ 230 | - **Low Consistency Violations**: &lt; 5% under normal load
+ 231 | - **Acceptable Latency**: &lt; 200ms average response time
+ 232 | - **High Availability**: &gt; 95% uptime with failure recovery
+ 233 | 
+ 234 | ### Trade-off Observations
+ 235 | - Sequential consistency shows higher latency but zero violations
+ 236 | - Eventual consistency provides better performance with temporary inconsistencies
+ 237 | - Flat naming offers fastest lookups but poor organization
+ 238 | - Structured naming provides good organization with minimal overhead
+ 239 | 
+ 240 | ## 🎓 Educational Value
+ 241 | 
+ 242 | This simulator demonstrates:
+ 243 | 1. **Real-world distributed system challenges**
+ 244 | 2. **Consistency model implications**
+ 245 | 3. **Naming service design decisions**
+ 246 | 4. **Performance monitoring techniques**
+ 247 | 5. **System failure handling**
+ 248 | 6. **Multi-threading coordination**
+ 249 | 
+ 250 | ## 🚧 Future Enhancements
+ 251 | 
+ 252 | - **Network Partition Simulation**: Simulate split-brain scenarios
+ 253 | - **Dynamic Load Balancing**: Automatic request distribution
+ 254 | - **Persistence Layer**: Data durability simulation
+ 255 | - **Byzantine Fault Tolerance**: Handle malicious node behavior
+ 256 | - **Geographic Distribution**: Multi-datacenter simulation
+ 257 | 
+ 258 | ## 📝 Implementation Notes
+ 259 | 
+ 260 | - **Thread Safety**: All shared data structures use concurrent collections
+ 261 | - **Resource Management**: Proper thread pool and executor management
+ 262 | - **Error Handling**: Graceful degradation during failures
+ 263 | - **GUI Responsiveness**: Background processing with UI updates
+ 264 | - **Performance Optimization**: Efficient data structures and algorithms
+ 265 | 
+ 266 | ---
+ 267 | 
+ 268 | ## 🏆 Key Learning Outcomes
+ 269 | 
+ 270 | After using this simulator, you will understand:
+ 271 | - How distributed systems maintain consistency
+ 272 | - Trade-offs between different naming approaches
+ 273 | - Impact of threading vs process-based architectures
+ 274 | - Real-time system monitoring and analysis
+ 275 | - Failure recovery mechanisms in distributed systems
+ 276 | - Performance characteristics under various loads
+ 277 | 
+ 278 | **Ready to explore the complex world of distributed systems!** 🌟 
+</pre>
+
+    <div class="file-header" id="configs_high-performance_properties">
+        <h2>configs/high-performance.properties</h2>
+        <div class="file-path">File: configs/high-performance.properties</div>
+        <div class="file-path">Language: PROPERTIES</div>
+        <div class="file-path">Lines: 56</div>
+    </div>
+    
+    <pre class="properties-code">   1 | # Distributed System Simulator Configuration - high-performance
+   2 | # Created: High-performance configuration for stress testing
+   3 | # Optimized for maximum throughput and load testing
+   4 | 
+   5 | # Thread Configuration - High Performance Settings
+   6 | thread.pool.size=15
+   7 | simulation.interval=200
+   8 | 
+   9 | # Node Configuration
+  10 | nodes=NodeA,NodeB,NodeC
+  11 | 
+  12 | # Simulation State
+  13 | simulation.running=false
+  14 | 
+  15 | # DNS Configuration - Extended for load testing
+  16 | dns.count=20
+  17 | dns.0.domain=localhost
+  18 | dns.0.ip=127.0.0.1
+  19 | dns.1.domain=example.com
+  20 | dns.1.ip=192.0.2.1
+  21 | dns.2.domain=www.example.com
+  22 | dns.2.ip=192.0.2.1
+  23 | dns.3.domain=api1.example.com
+  24 | dns.3.ip=192.168.1.101
+  25 | dns.4.domain=api2.example.com
+  26 | dns.4.ip=192.168.1.102
+  27 | dns.5.domain=api3.example.com
+  28 | dns.5.ip=192.168.1.103
+  29 | dns.6.domain=db-primary.example.com
+  30 | dns.6.ip=192.168.2.10
+  31 | dns.7.domain=db-secondary.example.com
+  32 | dns.7.ip=192.168.2.11
+  33 | dns.8.domain=cache-node1.example.com
+  34 | dns.8.ip=192.168.3.10
+  35 | dns.9.domain=cache-node2.example.com
+  36 | dns.9.ip=192.168.3.11
+  37 | dns.10.domain=cache-node3.example.com
+  38 | dns.10.ip=192.168.3.12
+  39 | dns.11.domain=lb-frontend.example.com
+  40 | dns.11.ip=192.168.1.5
+  41 | dns.12.domain=lb-backend.example.com
+  42 | dns.12.ip=192.168.1.6
+  43 | dns.13.domain=monitor1.example.com
+  44 | dns.13.ip=192.168.4.10
+  45 | dns.14.domain=monitor2.example.com
+  46 | dns.14.ip=192.168.4.11
+  47 | dns.15.domain=storage1.example.com
+  48 | dns.15.ip=192.168.5.10
+  49 | dns.16.domain=storage2.example.com
+  50 | dns.16.ip=192.168.5.11
+  51 | dns.17.domain=backup1.example.com
+  52 | dns.17.ip=192.168.6.10
+  53 | dns.18.domain=backup2.example.com
+  54 | dns.18.ip=192.168.6.11
+  55 | dns.19.domain=test.example.com
+  56 | dns.19.ip=192.168.99.1 
+</pre>
+
+    <div class="file-header" id="configs_sample_properties">
+        <h2>configs/sample.properties</h2>
+        <div class="file-path">File: configs/sample.properties</div>
+        <div class="file-path">Language: PROPERTIES</div>
+        <div class="file-path">Lines: 40</div>
+    </div>
+    
+    <pre class="properties-code">   1 | # Distributed System Simulator Configuration - sample
+   2 | # Created: Auto-generated sample configuration
+   3 | # This file demonstrates the save/load configuration functionality
+   4 | 
+   5 | # Thread Configuration
+   6 | thread.pool.size=7
+   7 | simulation.interval=800
+   8 | 
+   9 | # Node Configuration
+  10 | nodes=NodeA,NodeB,NodeC
+  11 | 
+  12 | # Simulation State
+  13 | simulation.running=false
+  14 | 
+  15 | # DNS Configuration
+  16 | dns.count=12
+  17 | dns.0.domain=localhost
+  18 | dns.0.ip=127.0.0.1
+  19 | dns.1.domain=example.com
+  20 | dns.1.ip=192.0.2.1
+  21 | dns.2.domain=www.example.com
+  22 | dns.2.ip=192.0.2.1
+  23 | dns.3.domain=service1.example.com
+  24 | dns.3.ip=192.168.1.10
+  25 | dns.4.domain=service2.example.com
+  26 | dns.4.ip=192.168.1.11
+  27 | dns.5.domain=database.example.com
+  28 | dns.5.ip=192.168.1.20
+  29 | dns.6.domain=api.example.com
+  30 | dns.6.ip=192.168.1.30
+  31 | dns.7.domain=cache.example.com
+  32 | dns.7.ip=192.168.1.40
+  33 | dns.8.domain=loadbalancer.example.com
+  34 | dns.8.ip=192.168.1.5
+  35 | dns.9.domain=monitoring.example.com
+  36 | dns.9.ip=192.168.1.50
+  37 | dns.10.domain=backup.example.com
+  38 | dns.10.ip=192.168.1.60
+  39 | dns.11.domain=storage.example.com
+  40 | dns.11.ip=192.168.1.70 
+</pre>
+
+</body>
+</html>
