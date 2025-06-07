@@ -13,7 +13,7 @@ import java.awt.*;
 public class DistributedSystemSimulator {
     private final Map<String, ServiceNode> nodes;
     private final CentralCoordinator coordinator;
-    private final ExecutorService threadPool;
+    private ExecutorService threadPool;
     private final FlatNamingService flatNaming;
     private final StructuredNamingService structuredNaming;
     private final DNSSimulator dnsService;
@@ -56,6 +56,11 @@ public class DistributedSystemSimulator {
     
     public void startSimulation() {
         isRunning = true;
+        
+        // Recreate thread pool if it's been shutdown
+        if (threadPool.isShutdown()) {
+            threadPool = Executors.newCachedThreadPool();
+        }
         
         // Start each node as a separate thread
         for (ServiceNode node : nodes.values()) {
